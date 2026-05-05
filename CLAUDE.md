@@ -72,6 +72,7 @@ types/
 ## What's done
 
 - Migrated the original static `index.html` into a Next.js 14 App Router project. Marketing page lives at `/`. Visual parity preserved. ElevenLabs widget continues to work.
+- Vercel framework preset set to **Next.js** (build/install/output settings auto-detected from `package.json`).
 
 ## What's next (not started)
 
