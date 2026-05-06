@@ -70,19 +70,6 @@ nav {
 }
 .nav-link:hover { color: var(--navy); }
 
-.nav-logo,
-.nav-wordmark {
-  display: block;
-  width: auto;
-}
-
-.nav-wordmark-link {
-  display: inline-flex;
-  align-items: center;
-  transition: opacity 0.2s;
-}
-.nav-wordmark-link:hover { opacity: 0.7; }
-
 /* ── HERO ── */
 .hero {
   min-height: 100vh;
