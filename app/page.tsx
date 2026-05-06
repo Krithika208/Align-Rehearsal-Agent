@@ -6,11 +6,28 @@ export default function Home() {
   return (
     <>
       <nav>
-        <a href="https://livealign.co" className="logo">
-          align<span>.</span>
-        </a>
-        <a href="https://livealign.co" className="nav-link">
-          livealign.co
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/align-logo.svg"
+          alt="Align"
+          width={32}
+          height={32}
+          className="nav-logo"
+        />
+        <a
+          href="https://livealign.co"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-wordmark-link"
+          aria-label="livealign.co"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/align-wordmark.svg"
+            alt="livealign.co"
+            height={26}
+            className="nav-wordmark"
+          />
         </a>
       </nav>
 
