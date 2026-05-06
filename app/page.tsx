@@ -1,17 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import ElevenLabsWidget, { startRehearsal } from "@/components/ElevenLabsWidget";
 
 export default function Home() {
   return (
     <>
       <nav>
-        <a href="https://livealign.co" className="logo">
+        <Link href="/" className="logo">
           align<span>.</span>
-        </a>
-        <a href="https://livealign.co" className="nav-link">
-          livealign.co
-        </a>
+        </Link>
+        <Link href="/login" className="nav-link">
+          Sign in
+        </Link>
       </nav>
 
       {/* HERO */}
@@ -187,8 +188,14 @@ export default function Home() {
 
       <footer>
         <p>
-          Built by <a href="https://livealign.co">Align Coaching</a> &middot;
-          Powered by ElevenLabs Conversational AI
+          Built by Krithika at{" "}
+          <a
+            href="https://livealign.co"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            livealign.co
+          </a>
         </p>
       </footer>
 
