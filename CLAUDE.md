@@ -51,15 +51,39 @@ Ship fast, iterate fast. Simplest thing that works. No over-engineering. No prem
 app/
   layout.tsx           # root layout, fonts, metadata
   page.tsx             # marketing homepage (Client Component, interactive CTAs)
-  globals.css          # Tailwind directives + migrated styles from original index.html
-  (app)/               # placeholder — future authenticated app pages live here
+  globals.css          # Tailwind directives + migrated styles + auth-page styles
+  login/page.tsx       # email/password login (server action)
+  signup/page.tsx      # email/password signup (server action; sends confirmation email)
+  auth/callback/route.ts # handles email-confirmation redirect → exchanges code for session
+  app/page.tsx         # logged-in landing (protected by middleware) — currently shows email + logout
   api/                 # placeholder — future API routes (Stripe webhooks, etc.)
 components/
   ElevenLabsWidget.tsx # mounts the EL custom element + halo + startRehearsal handler
-lib/                   # placeholder — future Supabase/Stripe clients & utilities
+lib/
+  supabase/
+    client.ts          # browser client (createBrowserClient)
+    server.ts          # server client w/ cookie adapters (Server Components, Actions, Routes)
+    middleware.ts      # session-refresh helper used by root middleware.ts
+middleware.ts          # protects /app/* — redirects unauthenticated users to /login
 types/
   elevenlabs.d.ts      # TS declaration for the <elevenlabs-convai> custom element
 ```
+
+## Environment variables
+
+Required in both `.env.local` (gitignored) and Vercel project settings (Production + Preview + Development):
+
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase Project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase publishable key (formerly "anon key"; format is now `sb_publishable_…` — `@supabase/ssr` accepts either format)
+
+## Database
+
+Schema managed in Supabase (no migrations checked into the repo yet). Tables:
+
+- `profiles` — one row per user, FK to `auth.users`. Auto-created via trigger on signup.
+- `conversations` — one row per rehearsal session (transcript stored as jsonb).
+
+Row-Level Security is enabled on both tables; users can only read/write their own rows.
 
 ## How to work with Krithika
 
@@ -73,11 +97,13 @@ types/
 
 - Migrated the original static `index.html` into a Next.js 14 App Router project. Marketing page lives at `/`. Visual parity preserved. ElevenLabs widget continues to work.
 - Vercel framework preset set to **Next.js** (build/install/output settings auto-detected from `package.json`).
+- Supabase auth wired up: signup, email confirmation, login, logout. `/app` is gated by middleware. `profiles` and `conversations` tables exist in Supabase with RLS.
 
 ## What's next (not started)
 
-- Auth provider integration
-- Supabase setup (users, rehearsal sessions, usage tracking)
-- Stripe integration (Founding 1,000 + standard tier)
-- App pages behind login (scenario picker, rehearsal flow, history)
+- Stripe integration (Founding 1,000 + standard tier) + usage caps (5 rehearsals/month for founding)
+- Scenario picker UI at `/app` (six launch scenarios)
+- Rehearsal flow: scenario setup → ElevenLabs session → write to `conversations` table → debrief view
 - ElevenLabs agent prompt engineering for the six launch scenarios
+- Profile editing UI
+- Password reset / OAuth providers / custom email templates
