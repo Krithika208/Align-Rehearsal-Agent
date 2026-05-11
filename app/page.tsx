@@ -75,7 +75,7 @@ export default function Home() {
             <div className="step-num">01</div>
             <h3>Choose a scenario</h3>
             <p>
-              Pick from eight common high-stakes conversations — or describe
+              Pick from six common high-stakes conversations — or describe
               your own specific situation. The agent confirms the setup before
               you begin.
             </p>
@@ -105,62 +105,61 @@ export default function Home() {
       <section className="scenarios-section" id="scenarios">
         <div className="scenarios-inner">
           <div className="section-label">What you can practise</div>
-          <h2>Eight scenarios, infinite variations</h2>
+          <h2>Six scenarios, and one of your own</h2>
           <div className="scenario-grid">
+            <div className="scenario-card">
+              <div className="scenario-icon">💬</div>
+              <div>
+                <h4>Deliver tough feedback</h4>
+                <p>
+                  With someone who is likely to push back — a peer, direct
+                  report, manager, or co-founder
+                </p>
+              </div>
+            </div>
             <div className="scenario-card">
               <div className="scenario-icon">💰</div>
               <div>
-                <h4>Negotiate a raise or promotion</h4>
-                <p>Your manager values you but has budget constraints</p>
+                <h4>Negotiate</h4>
+                <p>
+                  When you&apos;re looking for more than they seem willing to
+                  give
+                </p>
               </div>
             </div>
             <div className="scenario-card">
               <div className="scenario-icon">🛡️</div>
               <div>
-                <h4>Push back on a senior stakeholder</h4>
-                <p>A VP who wants to change direction on your project</p>
+                <h4>Push back on a difficult stakeholder</h4>
+                <p>Holding your line when they hold the power</p>
               </div>
             </div>
             <div className="scenario-card">
-              <div className="scenario-icon">💬</div>
+              <div className="scenario-icon">👋</div>
               <div>
-                <h4>Deliver difficult feedback</h4>
-                <p>A direct report who gets defensive and emotional</p>
+                <h4>End a working relationship</h4>
+                <p>Letting someone go or parting ways</p>
               </div>
             </div>
             <div className="scenario-card">
-              <div className="scenario-icon">🔄</div>
+              <div className="scenario-icon">📢</div>
               <div>
-                <h4>Navigate a restructure</h4>
-                <p>HR or your manager delivering role-change news</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">✋</div>
-              <div>
-                <h4>Set boundaries with a peer</h4>
-                <p>A colleague who keeps overstepping or taking credit</p>
+                <h4>Deliver bad news</h4>
+                <p>Saying what they may not want to hear</p>
               </div>
             </div>
             <div className="scenario-card">
               <div className="scenario-icon">🚪</div>
               <div>
-                <h4>Resign gracefully</h4>
-                <p>Your manager who tries to counter-offer and guilt-trip</p>
+                <h4>Resign with grace</h4>
+                <p>When they&apos;re not ready to let you go</p>
               </div>
             </div>
             <div className="scenario-card">
-              <div className="scenario-icon">↔️</div>
+              <div className="scenario-icon">✏️</div>
               <div>
-                <h4>Ask for a lateral move</h4>
-                <p>A manager worried about losing you from the team</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">🎯</div>
-              <div>
-                <h4>Address being passed over</h4>
-                <p>The manager who chose someone else</p>
+                <h4>Custom</h4>
+                <p>Whatever&apos;s keeping you up at night</p>
               </div>
             </div>
           </div>
