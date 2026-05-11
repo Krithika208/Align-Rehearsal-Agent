@@ -7,7 +7,12 @@ export default function Home() {
     <>
       <nav>
         <a href="https://livealign.co" className="logo">
-          align<span>.</span>
+          <img
+            src="/brand/align-lockup-navy.svg"
+            alt="Align"
+            width={115}
+            height={32}
+          />
         </a>
         <a href="https://livealign.co" className="nav-link">
           livealign.co

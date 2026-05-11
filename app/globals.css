@@ -50,14 +50,15 @@ nav {
 }
 
 .logo {
-  font-family: 'Fraunces', serif;
-  font-weight: 500;
-  font-size: 1.35rem;
-  color: var(--navy);
-  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
 }
-.logo span { color: var(--teal); }
+.logo img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
 
 .nav-link {
   font-size: 0.85rem;
