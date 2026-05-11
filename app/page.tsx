@@ -105,7 +105,7 @@ export default function Home() {
       <section className="scenarios-section" id="scenarios">
         <div className="scenarios-inner">
           <div className="section-label">What you can practise</div>
-          <h2>Six scenarios, and one of your own</h2>
+          <h2>Six scenarios, or one of your own</h2>
           <div className="scenario-grid">
             <div className="scenario-card">
               <div className="scenario-icon">💬</div>

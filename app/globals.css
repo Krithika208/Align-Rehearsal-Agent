@@ -324,12 +324,6 @@ h2 {
   gap: 1rem;
 }
 
-.scenario-grid > .scenario-card:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: calc(50% - 0.5rem);
-}
-
 .scenario-card {
   padding: 1.5rem 1.75rem;
   border-radius: 12px;
@@ -483,7 +477,6 @@ footer a {
   .hero { padding: 7rem 1.5rem 4rem; min-height: auto; }
   .steps { grid-template-columns: 1fr; gap: 1rem; }
   .scenario-grid { grid-template-columns: 1fr; }
-  .scenario-grid > .scenario-card:last-child:nth-child(odd) { width: auto; }
   .section { padding: 4rem 1.5rem; }
   .scenarios-section { padding: 4rem 1.5rem; }
   .try-section { padding: 5rem 1.5rem; }
