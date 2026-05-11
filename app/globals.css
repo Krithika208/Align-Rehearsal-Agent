@@ -70,6 +70,8 @@ nav {
 }
 .nav-link:hover { color: var(--navy); }
 
+.nav-logo { display: block; height: 32px; width: auto; }
+
 /* ── HERO ── */
 .hero {
   min-height: 100vh;

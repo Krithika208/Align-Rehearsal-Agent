@@ -15,6 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="icon" type="image/svg+xml" href="/brand/align-favicon.svg" />
+        <link rel="apple-touch-icon" href="/brand/align-app-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

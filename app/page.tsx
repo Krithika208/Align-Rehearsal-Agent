@@ -7,8 +7,15 @@ export default function Home() {
   return (
     <>
       <nav>
-        <Link href="/" className="logo">
-          align<span>.</span>
+        <Link href="/" className="logo" aria-label="Align — home">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/align-wordmark-navy.svg"
+            alt="Align"
+            width={76}
+            height={32}
+            className="nav-logo"
+          />
         </Link>
         <Link href="/login" className="nav-link">
           Sign in
