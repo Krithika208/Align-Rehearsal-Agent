@@ -11,6 +11,12 @@ import {
 
 type Step = "pick" | "setup" | "calling" | "complete";
 
+type TranscriptTurn = {
+  id: number;
+  role: "user" | "agent";
+  text: string;
+};
+
 type ActiveCall = {
   conversation: Awaited<ReturnType<typeof Conversation.startSession>>;
   dbId: string;
@@ -32,8 +38,21 @@ export default function AppClient({
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
+  const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
+  const [wrappingUp, setWrappingUp] = useState(false);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
+  const turnIdRef = useRef(0);
+
+  const appendTurn = useCallback((role: "user" | "agent", text: string) => {
+    const trimmed = text?.trim();
+    if (!trimmed) return;
+    turnIdRef.current += 1;
+    setTranscript((prev) => [
+      ...prev,
+      { id: turnIdRef.current, role, text: trimmed },
+    ]);
+  }, []);
 
   const pickScenario = (s: Scenario) => {
     setScenario(s);
@@ -53,6 +72,9 @@ export default function AppClient({
     if (!scenario || !relationship || !situation.trim()) return;
     setStarting(true);
     setError(null);
+    setTranscript([]);
+    setWrappingUp(false);
+    turnIdRef.current = 0;
     try {
       const res = await fetch("/api/elevenlabs/start-conversation", {
         method: "POST",
@@ -82,6 +104,14 @@ export default function AppClient({
         },
         onModeChange: ({ mode }) => {
           setMode(mode === "speaking" ? "speaking" : "listening");
+        },
+        onMessage: ({ message, source }) => {
+          if (!message) return;
+          if (source === "user") {
+            appendTurn("user", message);
+          } else if (source === "ai") {
+            appendTurn("agent", message);
+          }
         },
         onDisconnect: () => {
           void finalizeCall();
@@ -120,6 +150,19 @@ export default function AppClient({
     setStep("complete");
   }, []);
 
+  const wrapUpRehearsal = () => {
+    const active = activeCallRef.current;
+    if (!active) return;
+    const message = "I'd like to wrap up and move to the debrief now.";
+    try {
+      active.conversation.sendUserMessage(message);
+      appendTurn("user", message);
+      setWrappingUp(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send wrap-up");
+    }
+  };
+
   const endRehearsal = async () => {
     const active = activeCallRef.current;
     if (!active) {
@@ -147,7 +190,13 @@ export default function AppClient({
 
   if (step === "calling") {
     return (
-      <CallScreen mode={mode} onEnd={endRehearsal} />
+      <CallScreen
+        mode={mode}
+        transcript={transcript}
+        wrappingUp={wrappingUp}
+        onWrapUp={wrapUpRehearsal}
+        onEnd={endRehearsal}
+      />
     );
   }
 
@@ -331,38 +380,83 @@ function SetupScreen({
 
 function CallScreen({
   mode,
+  transcript,
+  wrappingUp,
+  onWrapUp,
   onEnd,
 }: {
   mode: "listening" | "speaking";
+  transcript: TranscriptTurn[];
+  wrappingUp: boolean;
+  onWrapUp: () => void;
   onEnd: () => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [transcript.length]);
+
+  const visualState =
+    mode === "speaking" ? "agent" : "listening";
+
   return (
     <main className="app-shell call-shell">
       <div className="call-card">
-        <div className={`mic-indicator ${mode === "speaking" ? "mic-speaking" : ""}`}>
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <line x1="12" y1="19" x2="12" y2="23" />
-            <line x1="8" y1="23" x2="16" y2="23" />
-          </svg>
+        <div
+          className={`call-visual call-visual-${visualState}`}
+          aria-hidden
+        >
+          <span className="call-visual-bar" />
+          <span className="call-visual-bar" />
+          <span className="call-visual-bar" />
+          <span className="call-visual-bar" />
+          <span className="call-visual-bar" />
         </div>
         <div className="call-name">Jordan</div>
         <div className="call-status">
-          {mode === "speaking" ? "Speaking…" : "Listening…"}
+          {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
         </div>
-        <button type="button" className="btn-end-call" onClick={onEnd}>
-          End rehearsal
+        <button
+          type="button"
+          className="btn-wrap-up"
+          onClick={onWrapUp}
+          disabled={wrappingUp}
+        >
+          {wrappingUp ? "Wrapping up…" : "Wrap up & debrief"}
         </button>
+        <button
+          type="button"
+          className="btn-end-now"
+          onClick={onEnd}
+        >
+          End call now
+        </button>
+      </div>
+
+      <div className="transcript-panel" aria-live="polite">
+        <div className="transcript-label">Live transcript</div>
+        <div className="transcript-scroll" ref={scrollRef}>
+          {transcript.length === 0 ? (
+            <div className="transcript-empty">
+              Your conversation will appear here as you and Jordan speak.
+            </div>
+          ) : (
+            transcript.map((turn) => (
+              <div
+                key={turn.id}
+                className={`transcript-turn transcript-turn-${turn.role}`}
+              >
+                <div className="transcript-speaker">
+                  {turn.role === "agent" ? "Jordan" : "You"}
+                </div>
+                <div className="transcript-text">{turn.text}</div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </main>
   );
