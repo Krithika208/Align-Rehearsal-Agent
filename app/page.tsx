@@ -1,8 +1,14 @@
-"use client";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
-import ElevenLabsWidget, { startRehearsal } from "@/components/ElevenLabsWidget";
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function Home() {
+  const ctaHref = user ? "/app" : "/signup";
+
   return (
     <>
       <nav>
@@ -14,9 +20,9 @@ export default function Home() {
             height={32}
           />
         </a>
-        <a href="https://livealign.co" className="nav-link">
-          livealign.co
-        </a>
+        <Link href="/login" className="nav-link">
+          Sign in
+        </Link>
       </nav>
 
       {/* HERO */}
@@ -34,11 +40,7 @@ export default function Home() {
           you&apos;re ready.
         </p>
         <div className="cta-group">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={(e) => startRehearsal(e)}
-          >
+          <Link href={ctaHref} className="btn-primary">
             <svg
               width="18"
               height="18"
@@ -55,7 +57,7 @@ export default function Home() {
               <line x1="8" y1="23" x2="16" y2="23" />
             </svg>
             Start a rehearsal
-          </button>
+          </Link>
           <a href="#how" className="btn-secondary">
             How it works
           </a>
@@ -166,40 +168,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TRY IT */}
-      <section className="try-section" id="try">
-        <div className="section-label">Try it now</div>
-        <h2>
-          Click below to begin.
-          <br />
-          Pick a scenario. Go.
-        </h2>
-        <p className="try-instructions">
-          The widget in the bottom-right corner connects you to Jordan, your
-          rehearsal partner. Allow microphone access, choose a scenario, and
-          start talking.
-        </p>
-        <button
-          type="button"
-          className="widget-callout"
-          onClick={(e) => startRehearsal(e)}
-        >
-          <span>Click to begin</span>
-          <span className="arrow">↘</span>
-        </button>
-      </section>
-
       <footer>
         <p>
-          Built by <a href="https://livealign.co">Align Coaching</a> &middot;
-          Powered by ElevenLabs Conversational AI
+          Built by Krithika at{" "}
+          <a
+            href="https://livealign.co"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            livealign.co
+          </a>
         </p>
       </footer>
-
-      {/* Toast for when widget hasn't loaded */}
-      <div className="toast" id="toast"></div>
-
-      <ElevenLabsWidget />
     </>
   );
 }

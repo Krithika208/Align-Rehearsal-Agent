@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AppClient from "./AppClient";
 
 export const metadata = {
   title: "Your rehearsals — Align",
@@ -21,22 +21,16 @@ export default async function AppHome() {
 
   if (!user) redirect("/login");
 
+  const fullName =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.user_metadata?.name as string | undefined) ??
+    null;
+
   return (
-    <main className="auth-shell">
-      <div className="auth-card">
-        <Link href="/" className="auth-logo">
-          align<span>.</span>
-        </Link>
-        <h1 className="auth-heading">Welcome, {user.email}</h1>
-        <p className="auth-sub">
-          You&apos;re logged in. Scenario picker and rehearsal flow coming soon.
-        </p>
-        <form action={logout}>
-          <button type="submit" className="btn-secondary auth-submit">
-            Log out
-          </button>
-        </form>
-      </div>
-    </main>
+    <AppClient
+      userEmail={user.email ?? ""}
+      userName={fullName}
+      logoutAction={logout}
+    />
   );
 }

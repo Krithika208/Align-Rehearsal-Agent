@@ -365,95 +365,6 @@ h2 {
   font-weight: 300;
 }
 
-/* ── TRY IT ── */
-.try-section {
-  padding: 8rem 2rem;
-  text-align: center;
-  position: relative;
-}
-
-.try-section .section-label { text-align: center; }
-.try-section h2 {
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.try-instructions {
-  max-width: 480px;
-  margin: 0 auto 2rem;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  font-weight: 300;
-}
-
-.widget-callout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: white;
-  border: 1.5px solid var(--teal);
-  border-radius: 12px;
-  margin-top: 1rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.25s ease;
-}
-.widget-callout:hover {
-  background: var(--teal);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(30, 123, 140, 0.25);
-}
-.widget-callout:hover span,
-.widget-callout:hover .arrow {
-  color: white;
-}
-
-.widget-callout .arrow {
-  font-size: 1.5rem;
-  color: var(--teal);
-  animation: bounce-right 1.5s ease-in-out infinite;
-  transition: color 0.25s ease;
-}
-
-.widget-callout span {
-  font-size: 0.9rem;
-  color: var(--navy);
-  font-weight: 500;
-  transition: color 0.25s ease;
-}
-
-@keyframes bounce-right {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(5px); }
-}
-
-/* Toast for fallback messaging */
-.toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  padding: 0.85rem 1.5rem;
-  background: var(--navy);
-  color: white;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-  z-index: 1000;
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
-  max-width: 90%;
-  text-align: center;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
 /* ── FOOTER ── */
 footer {
   padding: 3rem 2rem;
@@ -470,6 +381,7 @@ footer a {
   color: var(--teal);
   text-decoration: none;
 }
+footer a:hover { text-decoration: underline; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -479,37 +391,7 @@ footer a {
   .scenario-grid { grid-template-columns: 1fr; }
   .section { padding: 4rem 1.5rem; }
   .scenarios-section { padding: 4rem 1.5rem; }
-  .try-section { padding: 5rem 1.5rem; }
   .cta-group { flex-direction: column; }
-}
-
-/* ── ELEVENLABS WIDGET ──
-   The widget renders itself as a floating pill in the bottom-right.
-   We add a soft pulsing halo around it so it's findable. */
-elevenlabs-convai {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 999;
-}
-.widget-halo {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 998;
-  animation: halo-pulse 2.5s ease-in-out infinite;
-}
-@keyframes halo-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(30, 123, 140, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 18px rgba(30, 123, 140, 0);
-  }
 }
 
 /* ── AUTH PAGES ── */
@@ -657,3 +539,366 @@ elevenlabs-convai {
   font-weight: 500;
 }
 .auth-footer-link a:hover { text-decoration: underline; }
+
+/* ── /app SHELL (scenario picker, setup, call, complete) ── */
+.app-shell {
+  min-height: 100vh;
+  padding: 1.5rem 1.5rem 4rem;
+  background: var(--cream);
+  position: relative;
+  overflow: hidden;
+}
+.app-shell::before {
+  content: '';
+  position: absolute;
+  top: -25%;
+  right: -15%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, var(--teal-glow) 0%, transparent 65%);
+  pointer-events: none;
+}
+.app-shell::after {
+  content: '';
+  position: absolute;
+  bottom: -25%;
+  left: -20%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(196, 148, 58, 0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.app-header {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-header .auth-logo {
+  margin-bottom: 0;
+}
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-user {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.app-logout {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s;
+}
+.app-logout:hover { color: var(--navy); }
+
+.app-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  margin-left: -0.5rem;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+.app-back:hover {
+  color: var(--navy);
+  background: rgba(13, 46, 78, 0.04);
+}
+
+.app-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 0 0;
+}
+.app-inner-narrow {
+  max-width: 640px;
+}
+
+.app-heading {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  color: var(--navy);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.app-sub {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+  max-width: 560px;
+}
+
+.setup-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--teal-glow);
+  font-size: 1.3rem;
+  margin-right: 0.75rem;
+  vertical-align: middle;
+}
+
+/* picker grid — cards on cream, polished */
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.picker-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem 1.75rem;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid var(--border-subtle);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s ease;
+}
+.picker-card:hover {
+  border-color: rgba(30, 123, 140, 0.35);
+  box-shadow: 0 12px 36px rgba(13, 46, 78, 0.08);
+  transform: translateY(-2px);
+}
+
+.picker-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--teal-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1.15rem;
+}
+
+.picker-card h4 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 0.35rem;
+}
+
+.picker-card p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+/* setup screen */
+.setup-block {
+  margin-bottom: 1.75rem;
+}
+
+.setup-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--navy);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.7rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  padding: 0.55rem 1rem;
+  border-radius: 100px;
+  background: white;
+  border: 1.5px solid var(--border-subtle);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.chip:hover {
+  border-color: var(--teal);
+  color: var(--navy);
+}
+.chip-active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+}
+.chip-active:hover {
+  background: var(--navy-deep);
+  border-color: var(--navy-deep);
+  color: white;
+}
+
+.setup-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+.auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* call screen */
+.call-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.call-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: 3rem 2rem;
+  background: white;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(13, 46, 78, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.mic-indicator {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.mic-indicator::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 2px solid rgba(30, 123, 140, 0.35);
+  animation: mic-pulse 1.8s ease-in-out infinite;
+}
+.mic-speaking {
+  background: var(--teal);
+  transform: scale(1.04);
+}
+.mic-speaking::before {
+  animation-duration: 0.9s;
+  border-color: rgba(30, 123, 140, 0.65);
+}
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.12); opacity: 0; }
+}
+
+.call-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 1.8rem;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.call-status {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2.25rem;
+}
+
+.btn-end-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
+  background: transparent;
+  color: #a02f2f;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  border: 1.5px solid rgba(160, 47, 47, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-end-call:hover {
+  background: rgba(160, 47, 47, 0.06);
+  border-color: #a02f2f;
+}
+
+/* complete screen */
+.complete-inner {
+  padding-top: 4rem;
+}
+.complete-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .picker-grid { grid-template-columns: 1fr; }
+  .app-shell { padding: 1.25rem 1.25rem 3rem; }
+  .app-heading { font-size: 1.85rem; }
+}
