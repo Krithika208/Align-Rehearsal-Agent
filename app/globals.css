@@ -365,95 +365,6 @@ h2 {
   font-weight: 300;
 }
 
-/* ── TRY IT ── */
-.try-section {
-  padding: 8rem 2rem;
-  text-align: center;
-  position: relative;
-}
-
-.try-section .section-label { text-align: center; }
-.try-section h2 {
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.try-instructions {
-  max-width: 480px;
-  margin: 0 auto 2rem;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  font-weight: 300;
-}
-
-.widget-callout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: white;
-  border: 1.5px solid var(--teal);
-  border-radius: 12px;
-  margin-top: 1rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.25s ease;
-}
-.widget-callout:hover {
-  background: var(--teal);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(30, 123, 140, 0.25);
-}
-.widget-callout:hover span,
-.widget-callout:hover .arrow {
-  color: white;
-}
-
-.widget-callout .arrow {
-  font-size: 1.5rem;
-  color: var(--teal);
-  animation: bounce-right 1.5s ease-in-out infinite;
-  transition: color 0.25s ease;
-}
-
-.widget-callout span {
-  font-size: 0.9rem;
-  color: var(--navy);
-  font-weight: 500;
-  transition: color 0.25s ease;
-}
-
-@keyframes bounce-right {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(5px); }
-}
-
-/* Toast for fallback messaging */
-.toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  padding: 0.85rem 1.5rem;
-  background: var(--navy);
-  color: white;
-  font-size: 0.85rem;
-  border-radius: 8px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-  z-index: 1000;
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
-  max-width: 90%;
-  text-align: center;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
 /* ── FOOTER ── */
 footer {
   padding: 3rem 2rem;
@@ -470,6 +381,7 @@ footer a {
   color: var(--teal);
   text-decoration: none;
 }
+footer a:hover { text-decoration: underline; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
@@ -479,37 +391,7 @@ footer a {
   .scenario-grid { grid-template-columns: 1fr; }
   .section { padding: 4rem 1.5rem; }
   .scenarios-section { padding: 4rem 1.5rem; }
-  .try-section { padding: 5rem 1.5rem; }
   .cta-group { flex-direction: column; }
-}
-
-/* ── ELEVENLABS WIDGET ──
-   The widget renders itself as a floating pill in the bottom-right.
-   We add a soft pulsing halo around it so it's findable. */
-elevenlabs-convai {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 999;
-}
-.widget-halo {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 998;
-  animation: halo-pulse 2.5s ease-in-out infinite;
-}
-@keyframes halo-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(30, 123, 140, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 18px rgba(30, 123, 140, 0);
-  }
 }
 
 /* ── AUTH PAGES ── */
