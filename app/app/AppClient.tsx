@@ -40,6 +40,7 @@ export default function AppClient({
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [wrappingUp, setWrappingUp] = useState(false);
+  const [teachingDisabled, setTeachingDisabled] = useState(false);
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
@@ -158,6 +159,19 @@ export default function AppClient({
     setStep("complete");
   }, []);
 
+  const requestTeachingMode = () => {
+    const active = activeCallRef.current;
+    if (!active || teachingDisabled) return;
+    const signal = "[The user has requested teaching mode]";
+    try {
+      active.conversation.sendUserMessage(signal);
+      setTeachingDisabled(true);
+      setTimeout(() => setTeachingDisabled(false), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send signal");
+    }
+  };
+
   const wrapUpRehearsal = () => {
     const active = activeCallRef.current;
     if (!active) return;
@@ -202,6 +216,8 @@ export default function AppClient({
         mode={mode}
         transcript={transcript}
         wrappingUp={wrappingUp}
+        teachingDisabled={teachingDisabled}
+        onTeachingMode={requestTeachingMode}
         onWrapUp={wrapUpRehearsal}
         onEnd={endRehearsal}
       />
@@ -394,12 +410,16 @@ function CallScreen({
   mode,
   transcript,
   wrappingUp,
+  teachingDisabled,
+  onTeachingMode,
   onWrapUp,
   onEnd,
 }: {
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
   wrappingUp: boolean;
+  teachingDisabled: boolean;
+  onTeachingMode: () => void;
   onWrapUp: () => void;
   onEnd: () => void;
 }) {
@@ -431,6 +451,30 @@ function CallScreen({
         <div className="call-status">
           {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
         </div>
+        <button
+          type="button"
+          className="btn-teaching-mode"
+          onClick={onTeachingMode}
+          disabled={teachingDisabled}
+        >
+          <svg
+            className="btn-teaching-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M9 18h6" />
+            <path d="M10 22h4" />
+            <path d="M12 2a7 7 0 0 0-4 12.7c.8.7 1.2 1.4 1.2 2.3v1h5.6v-1c0-.9.4-1.6 1.2-2.3A7 7 0 0 0 12 2z" />
+          </svg>
+          I&apos;m stuck
+        </button>
         <button
           type="button"
           className="btn-wrap-up"
