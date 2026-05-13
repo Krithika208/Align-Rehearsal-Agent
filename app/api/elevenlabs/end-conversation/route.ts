@@ -15,6 +15,7 @@ export async function POST(req: Request) {
   let body: {
     conversation_db_id?: string;
     el_conversation_id?: string | null;
+    transcript?: unknown;
   };
   try {
     body = await req.json();
@@ -51,14 +52,19 @@ export async function POST(req: Request) {
     Math.round((endedAt.getTime() - startedAt.getTime()) / 1000)
   );
 
+  const update: Record<string, unknown> = {
+    ended_at: endedAt.toISOString(),
+    duration_seconds,
+    status: "completed",
+    el_conversation_id: body.el_conversation_id ?? null,
+  };
+  if (Array.isArray(body.transcript)) {
+    update.transcript = body.transcript;
+  }
+
   const { error: updateError } = await supabase
     .from("conversations")
-    .update({
-      ended_at: endedAt.toISOString(),
-      duration_seconds,
-      status: "completed",
-      el_conversation_id: body.el_conversation_id ?? null,
-    })
+    .update(update)
     .eq("id", id)
     .eq("user_id", user.id);
 

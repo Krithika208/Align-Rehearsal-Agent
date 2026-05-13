@@ -34,18 +34,10 @@ function normalizeTranscript(raw: unknown): TranscriptTurn[] {
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
     const rec = item as Record<string, unknown>;
-    const rawRole =
-      (typeof rec.role === "string" && rec.role) ||
-      (typeof rec.speaker === "string" && rec.speaker) ||
-      "";
-    const role: "user" | "agent" =
-      rawRole === "user" ? "user" : "agent";
-    const text =
-      (typeof rec.message === "string" && rec.message) ||
-      (typeof rec.text === "string" && rec.text) ||
-      (typeof rec.content === "string" && rec.content) ||
-      "";
-    const trimmed = text.trim();
+    const source = typeof rec.source === "string" ? rec.source : "";
+    const role: "user" | "agent" = source === "user" ? "user" : "agent";
+    const message = typeof rec.message === "string" ? rec.message : "";
+    const trimmed = message.trim();
     if (!trimmed) continue;
     turns.push({ role, text: trimmed });
   }
