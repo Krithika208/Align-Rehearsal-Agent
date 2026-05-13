@@ -44,15 +44,15 @@ export default function AppClient({
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
+  const transcriptRef = useRef<TranscriptTurn[]>([]);
 
   const appendTurn = useCallback((role: "user" | "agent", text: string) => {
     const trimmed = text?.trim();
     if (!trimmed) return;
     turnIdRef.current += 1;
-    setTranscript((prev) => [
-      ...prev,
-      { id: turnIdRef.current, role, text: trimmed },
-    ]);
+    const turn = { id: turnIdRef.current, role, text: trimmed };
+    transcriptRef.current = [...transcriptRef.current, turn];
+    setTranscript(transcriptRef.current);
   }, []);
 
   const pickScenario = (s: Scenario) => {
@@ -74,6 +74,7 @@ export default function AppClient({
     setStarting(true);
     setError(null);
     setTranscript([]);
+    transcriptRef.current = [];
     setWrappingUp(false);
     turnIdRef.current = 0;
     try {
@@ -136,33 +137,22 @@ export default function AppClient({
     if (!active) return;
     activeCallRef.current = null;
     const elId = active.conversation.getId?.() ?? null;
-    let endOk = false;
+    const transcriptPayload = transcriptRef.current.map((t) => ({
+      source: t.role === "agent" ? "ai" : "user",
+      message: t.text,
+    }));
     try {
-      const res = await fetch("/api/elevenlabs/end-conversation", {
+      await fetch("/api/elevenlabs/end-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversation_db_id: active.dbId,
           el_conversation_id: elId,
+          transcript: transcriptPayload,
         }),
       });
-      endOk = res.ok;
     } catch {
       /* best-effort */
-    }
-    if (endOk && elId) {
-      try {
-        await fetch("/api/elevenlabs/sync-transcript", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            conversation_db_id: active.dbId,
-            el_conversation_id: elId,
-          }),
-        });
-      } catch {
-        /* best-effort: sync failures shouldn't block the user */
-      }
     }
     setLastConversationId(active.dbId);
     setStep("complete");
