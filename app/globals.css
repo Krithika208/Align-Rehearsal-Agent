@@ -1027,6 +1027,114 @@ footer a:hover { text-decoration: underline; }
   margin-top: 1rem;
 }
 
+/* nav link in app header */
+.app-nav-link {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.app-nav-link:hover { color: var(--navy); }
+
+/* my rehearsals — list */
+.rehearsals-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.rehearsal-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  background: white;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.rehearsal-card:hover {
+  border-color: var(--teal);
+  box-shadow: 0 6px 24px rgba(13, 46, 78, 0.06);
+  transform: translateY(-1px);
+}
+.rehearsal-card-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  width: 2.4rem;
+  text-align: center;
+}
+.rehearsal-card-body { flex: 1; min-width: 0; }
+.rehearsal-card-body h4 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--navy);
+  margin: 0 0 0.2rem;
+}
+.rehearsal-card-meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+}
+.rehearsal-card-chev {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.rehearsals-empty {
+  margin-top: 2rem;
+  padding: 2rem 1.5rem;
+  background: white;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+  text-align: center;
+}
+.rehearsals-empty p {
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+}
+
+/* rehearsal detail */
+.rehearsal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+.rehearsal-situation {
+  background: rgba(13, 46, 78, 0.03);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+}
+.rehearsal-situation-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+.rehearsal-situation p {
+  color: var(--navy);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 0;
+}
+.rehearsal-transcript { max-width: none; }
+.rehearsal-transcript-scroll { max-height: none; }
+
 @media (max-width: 640px) {
   .picker-grid { grid-template-columns: 1fr; }
   .app-shell { padding: 1.25rem 1.25rem 3rem; }

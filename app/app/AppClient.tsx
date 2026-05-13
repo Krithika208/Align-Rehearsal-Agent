@@ -40,6 +40,7 @@ export default function AppClient({
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [wrappingUp, setWrappingUp] = useState(false);
+  const [lastConversationId, setLastConversationId] = useState<string | null>(null);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
@@ -135,8 +136,9 @@ export default function AppClient({
     if (!active) return;
     activeCallRef.current = null;
     const elId = active.conversation.getId?.() ?? null;
+    let endOk = false;
     try {
-      await fetch("/api/elevenlabs/end-conversation", {
+      const res = await fetch("/api/elevenlabs/end-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,9 +146,25 @@ export default function AppClient({
           el_conversation_id: elId,
         }),
       });
+      endOk = res.ok;
     } catch {
       /* best-effort */
     }
+    if (endOk && elId) {
+      try {
+        await fetch("/api/elevenlabs/sync-transcript", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversation_db_id: active.dbId,
+            el_conversation_id: elId,
+          }),
+        });
+      } catch {
+        /* best-effort: sync failures shouldn't block the user */
+      }
+    }
+    setLastConversationId(active.dbId);
     setStep("complete");
   }, []);
 
@@ -203,6 +221,7 @@ export default function AppClient({
   if (step === "complete") {
     return (
       <CompleteScreen
+        conversationId={lastConversationId}
         onAnother={backToPicker}
         onDone={() => {
           setScenario(null);
@@ -256,6 +275,9 @@ function PickerScreen({
         </a>
         <div className="app-header-right">
           <span className="app-user">Hi, {greeting}</span>
+          <a href="/rehearsals" className="app-nav-link">
+            My rehearsals
+          </a>
           <form action={logoutAction}>
             <button type="submit" className="app-logout">
               Log out
@@ -463,9 +485,11 @@ function CallScreen({
 }
 
 function CompleteScreen({
+  conversationId,
   onAnother,
   onDone,
 }: {
+  conversationId: string | null;
   onAnother: () => void;
   onDone: () => void;
 }) {
@@ -482,6 +506,14 @@ function CompleteScreen({
           <button type="button" className="btn-primary" onClick={onAnother}>
             Practice another
           </button>
+          {conversationId && (
+            <a
+              className="btn-secondary"
+              href={`/rehearsals/${conversationId}`}
+            >
+              View this rehearsal
+            </a>
+          )}
           <button type="button" className="btn-secondary" onClick={onDone}>
             Done for now
           </button>
