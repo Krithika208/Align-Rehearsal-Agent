@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SiteFooter from "@/components/SiteFooter";
 import { SCENARIOS } from "../app/scenarios";
 
 export const metadata = {
@@ -58,6 +59,7 @@ export default async function RehearsalsPage() {
   const rows = (conversations ?? []) as ConversationRow[];
 
   return (
+    <>
     <main className="app-shell">
       <header className="app-header">
         <a href="/app" className="auth-logo">
@@ -117,5 +119,7 @@ export default async function RehearsalsPage() {
         )}
       </div>
     </main>
+    <SiteFooter />
+    </>
   );
 }

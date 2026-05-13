@@ -113,6 +113,12 @@ export default async function SignupPage({
           <button type="submit" className="btn-primary auth-submit">
             Create account
           </button>
+          <p className="auth-consent">
+            By signing up, you agree to our{" "}
+            <Link href="/terms">Terms of Service</Link> and{" "}
+            <Link href="/privacy">Privacy Policy</Link>, and acknowledge our{" "}
+            <Link href="/disclaimer">AI Coaching Disclaimer</Link>.
+          </p>
         </form>
 
         <p className="auth-footer-link">
