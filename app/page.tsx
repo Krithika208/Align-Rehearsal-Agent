@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import SiteFooter from "@/components/SiteFooter";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -168,17 +169,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer>
-        <p>
-          <a
-            href="https://livealign.co"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            livealign.co
-          </a>
-        </p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

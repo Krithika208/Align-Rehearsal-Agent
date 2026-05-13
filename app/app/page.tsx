@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SiteFooter from "@/components/SiteFooter";
 import AppClient from "./AppClient";
 
 export const metadata = {
@@ -27,10 +28,13 @@ export default async function AppHome() {
     null;
 
   return (
-    <AppClient
-      userEmail={user.email ?? ""}
-      userName={fullName}
-      logoutAction={logout}
-    />
+    <>
+      <AppClient
+        userEmail={user.email ?? ""}
+        userName={fullName}
+        logoutAction={logout}
+      />
+      <SiteFooter />
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SiteFooter from "@/components/SiteFooter";
 import { SCENARIOS } from "../../app/scenarios";
 
 export const metadata = {
@@ -76,6 +77,7 @@ export default async function RehearsalDetailPage({
   const turns = normalizeTranscript(row.transcript);
 
   return (
+    <>
     <main className="app-shell">
       <header className="app-header">
         <a href="/rehearsals" className="app-back">
@@ -136,5 +138,7 @@ export default async function RehearsalDetailPage({
         </div>
       </div>
     </main>
+    <SiteFooter />
+    </>
   );
 }
