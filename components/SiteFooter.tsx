@@ -4,13 +4,7 @@ export default function SiteFooter() {
   return (
     <footer className="site-footer">
       <nav className="site-footer-nav" aria-label="Footer">
-        <a
-          href="https://livealign.co"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          livealign.co
-        </a>
+        <Link href="/">livealign.co</Link>
         <span className="site-footer-dot" aria-hidden>
           ·
         </span>

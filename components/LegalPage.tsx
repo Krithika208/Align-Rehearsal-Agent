@@ -11,19 +11,11 @@ export default async function LegalPage({ slug }: { slug: string }) {
 
   return (
     <>
-      <nav>
-        <Link href="/" className="logo">
-          <img
-            src="/brand/align-lockup-navy.svg"
-            alt="Align"
-            width={115}
-            height={32}
-          />
+      <header className="legal-header">
+        <Link href="/" className="auth-logo" aria-label="Back to Align home">
+          align<span>.</span>
         </Link>
-        <Link href="/login" className="nav-link">
-          Sign in
-        </Link>
-      </nav>
+      </header>
       <main className="legal-shell">
         <article className="legal-article">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
