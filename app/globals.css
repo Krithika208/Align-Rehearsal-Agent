@@ -1199,16 +1199,17 @@ footer a:hover { text-decoration: underline; }
 }
 
 /* ── LEGAL PAGES ── */
-.legal-header {
-  padding: 1.5rem 2rem;
-  background: #ffffff;
+.legal-top-nav {
   position: sticky;
   top: 0;
   z-index: 10;
+  background: #ffffff;
   border-bottom: 1px solid var(--border-subtle);
 }
-.legal-header .auth-logo {
-  margin-bottom: 0;
+.legal-top-nav .site-footer {
+  background: transparent;
+  border-top: none;
+  padding: 0.85rem 1.5rem;
 }
 .legal-shell {
   padding: 1.5rem 1.5rem 4rem;
@@ -1311,7 +1312,7 @@ footer a:hover { text-decoration: underline; }
   .call-card { padding: 2rem 1.5rem 1.5rem; }
   .call-visual { width: 116px; height: 116px; }
   .transcript-scroll { max-height: 220px; }
-  .legal-header { padding: 1.25rem 1.25rem; }
+  .legal-top-nav .site-footer { padding: 0.7rem 1rem; }
   .legal-shell { padding: 1rem 1rem 3rem; }
   .legal-article { padding: 2rem 1.5rem; border-radius: 12px; }
 }
