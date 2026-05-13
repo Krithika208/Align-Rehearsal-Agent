@@ -345,6 +345,19 @@ function SetupScreen({
         </h1>
         <p className="app-sub">{scenario.subhead}</p>
 
+        <div className="setup-welcome">
+          <p>
+            Hey, welcome to your rehearsal session. Before we jump in — Jordan
+            will play the other person in this rehearsal conversation for a
+            few minutes. He will push back, deflect, and react like the actual
+            person might. When you&apos;re done, you&apos;ll come out of role
+            together and debrief.
+          </p>
+          <p className="setup-welcome-cue">
+            Take a breath. When you&apos;re ready, click Start rehearsal.
+          </p>
+        </div>
+
         <div className="setup-block">
           <label className="setup-label">Who are you talking to?</label>
           <div className="chip-row">

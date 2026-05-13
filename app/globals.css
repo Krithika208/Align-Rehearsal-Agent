@@ -729,6 +729,29 @@ footer a:hover { text-decoration: underline; }
 }
 
 /* setup screen */
+.setup-welcome {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.75rem 1.85rem;
+  margin-bottom: 2rem;
+  border-left: 3px solid var(--teal-light);
+  box-shadow: 0 4px 18px rgba(30, 123, 140, 0.06);
+}
+.setup-welcome p {
+  color: var(--navy);
+  font-size: 0.98rem;
+  line-height: 1.75;
+  font-weight: 300;
+  margin: 0;
+}
+.setup-welcome p + p {
+  margin-top: 1rem;
+}
+.setup-welcome-cue {
+  font-style: italic;
+  color: var(--teal) !important;
+}
+
 .setup-block {
   margin-bottom: 1.75rem;
 }
