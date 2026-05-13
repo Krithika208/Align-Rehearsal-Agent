@@ -170,7 +170,6 @@ export default async function Home() {
 
       <footer>
         <p>
-          Built by Krithika at{" "}
           <a
             href="https://livealign.co"
             target="_blank"
