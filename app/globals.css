@@ -33,7 +33,7 @@ body {
 }
 
 /* ── NAV ── */
-nav {
+body > nav {
   position: fixed;
   top: 0;
   left: 0;
@@ -385,7 +385,7 @@ footer a:hover { text-decoration: underline; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  nav { padding: 1rem 1.25rem; }
+  body > nav { padding: 1rem 1.25rem; }
   .hero { padding: 7rem 1.5rem 4rem; min-height: auto; }
   .steps { grid-template-columns: 1fr; gap: 1rem; }
   .scenario-grid { grid-template-columns: 1fr; }
