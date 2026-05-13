@@ -1201,7 +1201,11 @@ footer a:hover { text-decoration: underline; }
 /* ── LEGAL PAGES ── */
 .legal-header {
   padding: 1.5rem 2rem;
-  background: var(--cream);
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--border-subtle);
 }
 .legal-header .auth-logo {
   margin-bottom: 0;
