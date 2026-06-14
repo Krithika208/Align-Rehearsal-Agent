@@ -10,6 +10,18 @@ export default async function Home() {
 
   const ctaHref = user ? "/app" : "/signup";
 
+  // Hide the Pricing link from anyone who already has an active subscription.
+  let hasActiveSubscription = false;
+  if (user) {
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    hasActiveSubscription =
+      subscription?.status === "active" || subscription?.status === "trialing";
+  }
+
   return (
     <>
       <nav>
@@ -21,9 +33,16 @@ export default async function Home() {
             height={32}
           />
         </a>
-        <Link href="/login" className="nav-link">
-          Sign in
-        </Link>
+        <div className="nav-links">
+          {!hasActiveSubscription && (
+            <Link href="/pricing" className="nav-link">
+              Pricing
+            </Link>
+          )}
+          <Link href={user ? "/app" : "/login"} className="nav-link">
+            {user ? "Your rehearsals" : "Sign in"}
+          </Link>
+        </div>
       </nav>
 
       {/* HERO */}

@@ -1,0 +1,241 @@
+import { NextResponse } from "next/server";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+
+const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
+const STANDARD_LOOKUP_KEY = "align_standard_monthly";
+const FOUNDING_ITERATIONS = 12;
+
+async function priceIdForLookupKey(lookupKey: string): Promise<string> {
+  const prices = await stripe.prices.list({
+    lookup_keys: [lookupKey],
+    active: true,
+    limit: 1,
+  });
+  const price = prices.data[0];
+  if (!price) {
+    throw new Error(`No active Stripe price found for lookup_key "${lookupKey}"`);
+  }
+  return price.id;
+}
+
+// In the current API version the subscription id lives on the invoice's parent.
+function subscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  const sub = invoice.parent?.subscription_details?.subscription;
+  if (!sub) return null;
+  return typeof sub === "string" ? sub : sub.id;
+}
+
+function lookupKeyFromSubscription(
+  subscription: Stripe.Subscription
+): string | null {
+  return subscription.items.data[0]?.price.lookup_key ?? null;
+}
+
+export async function POST(request: Request) {
+  const body = await request.text();
+  const signature = request.headers.get("stripe-signature");
+
+  if (!signature) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid signature";
+    return NextResponse.json(
+      { error: `Webhook signature verification failed: ${message}` },
+      { status: 400 }
+    );
+  }
+
+  const supabase = createServiceRoleClient();
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        if (!subscriptionId) break;
+
+        const userId = session.metadata?.user_id;
+        const isFounding = session.metadata?.founding_member === "true";
+        if (!userId) break;
+
+        const customerId =
+          typeof session.customer === "string"
+            ? session.customer
+            : session.customer?.id;
+
+        let foundingLockedUntil: Date | null = null;
+        if (isFounding) {
+          foundingLockedUntil = new Date();
+          foundingLockedUntil.setMonth(
+            foundingLockedUntil.getMonth() + FOUNDING_ITERATIONS
+          );
+        }
+
+        const { error: insertError } = await supabase
+          .from("subscriptions")
+          .upsert(
+            {
+              user_id: userId,
+              stripe_customer_id: customerId ?? "",
+              stripe_subscription_id: subscriptionId,
+              tier: isFounding ? "founding" : "standard",
+              status: "active",
+              founding_member: isFounding,
+              founding_locked_until: foundingLockedUntil
+                ? foundingLockedUntil.toISOString()
+                : null,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" }
+          );
+
+        if (insertError) {
+          throw new Error(`Failed to insert subscription: ${insertError.message}`);
+        }
+
+        // For founding members, schedule the auto-transition to standard rate
+        // after 12 billing cycles. Schedules can only be created from an
+        // existing subscription, so this happens here, not at checkout.
+        if (isFounding) {
+          const [foundingPriceId, standardPriceId] = await Promise.all([
+            priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
+            priceIdForLookupKey(STANDARD_LOOKUP_KEY),
+          ]);
+
+          const schedule = await stripe.subscriptionSchedules.create({
+            from_subscription: subscriptionId,
+          });
+
+          await stripe.subscriptionSchedules.update(schedule.id, {
+            end_behavior: "release",
+            phases: [
+              {
+                items: [{ price: foundingPriceId, quantity: 1 }],
+                // 12 monthly billing cycles at the founding rate.
+                duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
+              },
+              {
+                items: [{ price: standardPriceId, quantity: 1 }],
+              },
+            ],
+          });
+
+          const { error: scheduleUpdateError } = await supabase
+            .from("subscriptions")
+            .update({
+              stripe_subscription_schedule_id: schedule.id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("stripe_subscription_id", subscriptionId);
+
+          if (scheduleUpdateError) {
+            throw new Error(
+              `Failed to save schedule id: ${scheduleUpdateError.message}`
+            );
+          }
+        }
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+        const lookupKey = lookupKeyFromSubscription(subscription);
+
+        const update: Record<string, unknown> = {
+          status: subscription.status,
+          updated_at: new Date().toISOString(),
+        };
+        if (lookupKey === STANDARD_LOOKUP_KEY) {
+          update.tier = "standard";
+        } else if (lookupKey === FOUNDING_LOOKUP_KEY) {
+          update.tier = "founding";
+        }
+
+        const { error } = await supabase
+          .from("subscriptions")
+          .update(update)
+          .eq("stripe_subscription_id", subscription.id);
+        if (error) {
+          throw new Error(`Failed to update subscription: ${error.message}`);
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "canceled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_subscription_id", subscription.id);
+        if (error) {
+          throw new Error(`Failed to cancel subscription: ${error.message}`);
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        const subscriptionId = subscriptionIdFromInvoice(invoice);
+        if (!subscriptionId) break;
+
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "past_due",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_subscription_id", subscriptionId);
+        if (error) {
+          throw new Error(`Failed to mark past_due: ${error.message}`);
+        }
+        break;
+      }
+
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        const subscriptionId = subscriptionIdFromInvoice(invoice);
+        if (!subscriptionId) break;
+
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "active",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("stripe_subscription_id", subscriptionId);
+        if (error) {
+          throw new Error(`Failed to mark active: ${error.message}`);
+        }
+        break;
+      }
+
+      default:
+        // Unhandled event types are acknowledged so Stripe stops retrying.
+        break;
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Webhook handler error";
+    console.error(`Stripe webhook error (${event.type}):`, message);
+    // 500 tells Stripe to retry — appropriate for transient DB/Stripe failures.
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  return NextResponse.json({ received: true });
+}
