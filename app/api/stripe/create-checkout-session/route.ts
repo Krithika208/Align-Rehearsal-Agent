@@ -20,6 +20,17 @@ async function priceIdForLookupKey(lookupKey: string): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  // TEMPORARY DEBUG — remove once the 500 is diagnosed.
+  console.error(
+    "[checkout-route] STRIPE_SECRET_KEY present:",
+    !!process.env.STRIPE_SECRET_KEY
+  );
+  console.error(
+    "[checkout-route] SUPABASE_SERVICE_ROLE_KEY present:",
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.error("[checkout-route] handler invoked");
+
   try {
     const supabase = await createClient();
     const {
@@ -115,49 +126,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    // Full visibility into checkout failures (the prior version swallowed these).
+    // TEMPORARY DEBUG — unconditional error exposure. Strip after diagnosing.
     console.error("[create-checkout-session] error:", error);
 
-    const err = error as {
-      message?: string;
-      stack?: string;
-      type?: string;
-      code?: string;
-    };
-    const isStripeError = Boolean(err?.type || err?.code);
-    if (isStripeError) {
-      console.error("[create-checkout-session] Stripe error:", {
-        type: err.type,
-        code: err.code,
-        message: err.message,
-      });
-    }
-    console.error("[create-checkout-session] stack:", err?.stack);
-
-    // Only surface internals on test keys — never leak details in live mode.
-    const isTestMode =
-      process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_") ?? false;
-
-    const body: {
-      error: string;
-      debug?: {
-        message?: string;
-        stack?: string;
-        stripeType?: string;
-        stripeCode?: string;
-      };
-    } = { error: "Pricing is temporarily unavailable. Please try again." };
-
-    if (isTestMode) {
-      body.debug = {
-        message: err?.message,
-        stack: err?.stack,
-        ...(isStripeError
-          ? { stripeType: err.type, stripeCode: err.code }
-          : {}),
-      };
-    }
-
-    return NextResponse.json(body, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Pricing is temporarily unavailable. Please try again.",
+        debug_message: (error as any)?.message ?? String(error),
+        debug_type: (error as any)?.type,
+        debug_code: (error as any)?.code,
+        debug_stack: (error as any)?.stack,
+      },
+      { status: 500 }
+    );
   }
 }
