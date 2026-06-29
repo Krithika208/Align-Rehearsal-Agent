@@ -3,6 +3,11 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+// Stripe webhooks need the byte-exact raw body for signature verification.
+// Force the Node.js runtime and opt out of static optimization / body parsing.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
 const STANDARD_LOOKUP_KEY = "align_standard_monthly";
 const FOUNDING_ITERATIONS = 12;
@@ -41,7 +46,11 @@ export async function POST(request: Request) {
     hasSignatureHeader: !!request.headers.get("stripe-signature"),
   });
 
-  const body = await request.text();
+  // Read the byte-exact raw body. Using an ArrayBuffer → Buffer (rather than
+  // request.text()) preserves the exact bytes Stripe signed, avoiding any
+  // text re-encoding that breaks signature verification under the App Router.
+  const rawBody = await request.arrayBuffer();
+  const bodyBuffer = Buffer.from(rawBody);
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
@@ -51,7 +60,7 @@ export async function POST(request: Request) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(
-      body,
+      bodyBuffer,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
