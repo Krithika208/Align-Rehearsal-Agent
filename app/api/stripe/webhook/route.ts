@@ -34,6 +34,13 @@ function lookupKeyFromSubscription(
 }
 
 export async function POST(request: Request) {
+  // TEMPORARY DEBUG — remove once the 400 is diagnosed.
+  console.error("[stripe-webhook] handler invoked", {
+    secretPresent: !!process.env.STRIPE_WEBHOOK_SECRET,
+    secretLength: process.env.STRIPE_WEBHOOK_SECRET?.length ?? 0,
+    hasSignatureHeader: !!request.headers.get("stripe-signature"),
+  });
+
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
@@ -48,10 +55,19 @@ export async function POST(request: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid signature";
+  } catch (error) {
+    // TEMPORARY DEBUG — surface the real verification error. Strip after diagnosing.
+    console.error("[stripe-webhook] verification or handler error:", {
+      message: (error as any)?.message,
+      name: (error as any)?.name,
+      stack: (error as any)?.stack,
+    });
     return NextResponse.json(
-      { error: `Webhook signature verification failed: ${message}` },
+      {
+        error: "Webhook error",
+        debug_message: (error as any)?.message ?? String(error),
+        debug_name: (error as any)?.name,
+      },
       { status: 400 }
     );
   }
