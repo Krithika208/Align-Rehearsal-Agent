@@ -152,14 +152,26 @@ export async function POST(request: Request) {
               from_subscription: subscriptionId,
             });
 
+            // Phase 1 needs a numeric Unix timestamp to anchor end dates —
+            // the string 'now' is accepted by the types but rejected at runtime
+            // on a from_subscription schedule. Use the subscription's current
+            // period start. In the 2026-05-27.dahlia API version that lives on
+            // the subscription item, not the top-level subscription; fall back
+            // to the schedule's own auto-populated first-phase start.
+            const subscription = await stripe.subscriptions.retrieve(
+              subscriptionId
+            );
+            const phase1Start =
+              subscription.items.data[0]?.current_period_start ??
+              schedule.phases[0]?.start_date;
+
             await stripe.subscriptionSchedules.update(schedule.id, {
               end_behavior: "release",
               phases: [
                 {
                   items: [{ price: foundingPriceId, quantity: 1 }],
-                  // Anchor the schedule to now (fires right after checkout) so
-                  // Stripe can compute Phase 1's end date and Phase 2's start.
-                  start_date: "now",
+                  // Numeric timestamp anchor (not 'now').
+                  start_date: phase1Start,
                   // 12 monthly billing cycles at the founding rate.
                   duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
                 },
