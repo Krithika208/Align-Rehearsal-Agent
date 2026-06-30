@@ -136,41 +136,66 @@ export async function POST(request: Request) {
         // after 12 billing cycles. Schedules can only be created from an
         // existing subscription, so this happens here, not at checkout.
         if (isFounding) {
-          const [foundingPriceId, standardPriceId] = await Promise.all([
-            priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
-            priceIdForLookupKey(STANDARD_LOOKUP_KEY),
-          ]);
-
-          const schedule = await stripe.subscriptionSchedules.create({
-            from_subscription: subscriptionId,
-          });
-
-          await stripe.subscriptionSchedules.update(schedule.id, {
-            end_behavior: "release",
-            phases: [
-              {
-                items: [{ price: foundingPriceId, quantity: 1 }],
-                // 12 monthly billing cycles at the founding rate.
-                duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
-              },
-              {
-                items: [{ price: standardPriceId, quantity: 1 }],
-              },
-            ],
-          });
-
-          const { error: scheduleUpdateError } = await supabase
-            .from("subscriptions")
-            .update({
-              stripe_subscription_schedule_id: schedule.id,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("stripe_subscription_id", subscriptionId);
-
-          if (scheduleUpdateError) {
-            throw new Error(
-              `Failed to save schedule id: ${scheduleUpdateError.message}`
+          // TEMPORARY DEBUG — surface why schedule creation silently fails.
+          try {
+            console.error(
+              "[stripe-webhook] creating subscription schedule for",
+              subscriptionId
             );
+
+            const [foundingPriceId, standardPriceId] = await Promise.all([
+              priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
+              priceIdForLookupKey(STANDARD_LOOKUP_KEY),
+            ]);
+
+            const schedule = await stripe.subscriptionSchedules.create({
+              from_subscription: subscriptionId,
+            });
+
+            await stripe.subscriptionSchedules.update(schedule.id, {
+              end_behavior: "release",
+              phases: [
+                {
+                  items: [{ price: foundingPriceId, quantity: 1 }],
+                  // 12 monthly billing cycles at the founding rate.
+                  duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
+                },
+                {
+                  items: [{ price: standardPriceId, quantity: 1 }],
+                },
+              ],
+            });
+
+            console.error(
+              "[stripe-webhook] schedule created successfully:",
+              schedule.id
+            );
+
+            const { error: scheduleUpdateError } = await supabase
+              .from("subscriptions")
+              .update({
+                stripe_subscription_schedule_id: schedule.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("stripe_subscription_id", subscriptionId);
+
+            if (scheduleUpdateError) {
+              throw new Error(
+                `Failed to save schedule id: ${scheduleUpdateError.message}`
+              );
+            }
+
+            console.error("[stripe-webhook] DB updated with schedule id");
+          } catch (scheduleError) {
+            console.error("[stripe-webhook] SCHEDULE CREATION FAILED:", {
+              message: (scheduleError as any)?.message,
+              type: (scheduleError as any)?.type,
+              code: (scheduleError as any)?.code,
+              stack: (scheduleError as any)?.stack,
+            });
+            // DO NOT re-throw — we still want the webhook to return 200 so Stripe
+            // doesn't retry forever. The row keeps a NULL
+            // stripe_subscription_schedule_id (the symptom we're debugging).
           }
         }
         break;
