@@ -157,11 +157,16 @@ export async function POST(request: Request) {
               phases: [
                 {
                   items: [{ price: foundingPriceId, quantity: 1 }],
+                  // Anchor the schedule to now (fires right after checkout) so
+                  // Stripe can compute Phase 1's end date and Phase 2's start.
+                  start_date: "now",
                   // 12 monthly billing cycles at the founding rate.
                   duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
                 },
                 {
                   items: [{ price: standardPriceId, quantity: 1 }],
+                  // No start_date — Stripe anchors it to the end of Phase 1.
+                  // No end_date — runs indefinitely at the standard rate.
                 },
               ],
             });
