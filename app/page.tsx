@@ -39,6 +39,11 @@ export default async function Home() {
               Pricing
             </Link>
           )}
+          {user && (
+            <Link href="/account" className="nav-link">
+              Account
+            </Link>
+          )}
           <Link href={user ? "/app" : "/login"} className="nav-link">
             {user ? "Your rehearsals" : "Sign in"}
           </Link>

@@ -9,7 +9,12 @@ export const metadata = {
 
 const FOUNDING_CAP = 100;
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string }>;
+}) {
+  const { reason } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -31,12 +36,25 @@ export default async function PricingPage() {
             height={32}
           />
         </a>
-        <Link href={user ? "/app" : "/login"} className="nav-link">
-          {user ? "Your rehearsals" : "Sign in"}
-        </Link>
+        <div className="nav-links">
+          {user && (
+            <Link href="/account" className="nav-link">
+              Account
+            </Link>
+          )}
+          <Link href={user ? "/app" : "/login"} className="nav-link">
+            {user ? "Your rehearsals" : "Sign in"}
+          </Link>
+        </div>
       </nav>
 
       <main className="pricing-shell">
+        {reason === "subscribe" && (
+          <div className="pricing-banner" role="status">
+            An active subscription is needed to start rehearsing. Choose a plan
+            below to get going.
+          </div>
+        )}
         <div className="section-label">Pricing</div>
         <h1 className="pricing-heading">
           One plan. <em>Unlimited</em> practice.

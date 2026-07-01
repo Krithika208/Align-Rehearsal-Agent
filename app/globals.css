@@ -1456,3 +1456,148 @@ footer a:hover { text-decoration: underline; }
   color: var(--text-secondary);
   font-weight: 300;
 }
+
+.pricing-banner {
+  max-width: 440px;
+  margin: 0 0 2rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: var(--teal-glow);
+  border: 1px solid rgba(30, 123, 140, 0.2);
+  color: var(--navy);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ── ACCOUNT ── */
+.account-banner {
+  margin: 0 0 1.75rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: rgba(196, 148, 58, 0.1);
+  border: 1px solid rgba(196, 148, 58, 0.3);
+  color: var(--navy);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.account-shell {
+  min-height: calc(100vh - 60px);
+  background: var(--cream);
+  padding: 9rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+}
+.account-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 16px 48px rgba(13, 46, 78, 0.06);
+}
+.account-card .section-label {
+  margin-bottom: 0.85rem;
+}
+.account-heading {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  margin: 0 0 1.75rem;
+  animation: none;
+}
+.account-details {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.account-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.account-row dt {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.account-row dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--navy);
+  text-align: right;
+}
+.account-note {
+  margin: 0 0 1.75rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.account-note strong {
+  font-weight: 500;
+  color: var(--navy);
+}
+.account-action {
+  margin: 0 0 0.5rem;
+}
+.account-action .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+.account-action .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.account-error {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #b42318;
+}
+.account-meta {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.account-email {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.account-footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.account-footer-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.account-footer-nav a:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .account-shell { padding: 7rem 1.25rem 3rem; }
+  .account-card { padding: 2.25rem 1.5rem; }
+}

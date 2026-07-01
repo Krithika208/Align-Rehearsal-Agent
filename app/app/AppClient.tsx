@@ -284,6 +284,9 @@ function PickerScreen({
           <a href="/rehearsals" className="app-nav-link">
             My rehearsals
           </a>
+          <a href="/account" className="app-nav-link">
+            Account
+          </a>
           <form action={logoutAction}>
             <button type="submit" className="app-logout">
               Log out
