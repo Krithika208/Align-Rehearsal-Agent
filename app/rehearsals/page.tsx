@@ -69,6 +69,9 @@ export default async function RehearsalsPage() {
           <a href="/app" className="app-nav-link">
             Back to rehearse
           </a>
+          <a href="https://livealign.co" className="app-nav-link">
+            About
+          </a>
         </div>
       </header>
       <div className="app-inner app-inner-narrow">

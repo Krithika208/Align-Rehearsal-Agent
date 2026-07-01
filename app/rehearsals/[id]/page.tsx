@@ -83,9 +83,14 @@ export default async function RehearsalDetailPage({
         <a href="/rehearsals" className="app-back">
           <span aria-hidden>←</span> My rehearsals
         </a>
-        <a href="/app" className="auth-logo">
-          align<span>.</span>
-        </a>
+        <div className="app-header-right">
+          <a href="/app" className="auth-logo">
+            align<span>.</span>
+          </a>
+          <a href="https://livealign.co" className="app-nav-link">
+            About
+          </a>
+        </div>
       </header>
       <div className="app-inner app-inner-narrow">
         <div className="section-label">Rehearsal</div>

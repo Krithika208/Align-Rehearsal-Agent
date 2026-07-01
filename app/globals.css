@@ -1488,6 +1488,38 @@ footer a:hover { text-decoration: underline; }
   display: flex;
   justify-content: center;
 }
+.account-column {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+}
+.account-signout {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+.account-signout-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.account-signout-btn:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.account-signout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  text-decoration: none;
+}
 .account-card {
   width: 100%;
   max-width: 520px;

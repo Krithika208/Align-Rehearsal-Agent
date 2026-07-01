@@ -25,14 +25,14 @@ export default async function Home() {
   return (
     <>
       <nav>
-        <a href="https://livealign.co" className="logo">
+        <Link href="/" className="logo" aria-label="Align home">
           <img
             src="/brand/align-lockup-navy.svg"
             alt="Align"
             width={115}
             height={32}
           />
-        </a>
+        </Link>
         <div className="nav-links">
           {!hasActiveSubscription && (
             <Link href="/pricing" className="nav-link">
@@ -47,6 +47,9 @@ export default async function Home() {
           <Link href={user ? "/app" : "/login"} className="nav-link">
             {user ? "Your rehearsals" : "Sign in"}
           </Link>
+          <a href="https://livealign.co" className="nav-link">
+            About
+          </a>
         </div>
       </nav>
 

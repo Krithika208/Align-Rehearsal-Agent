@@ -5,6 +5,7 @@ import { getSubscriptionInfo } from "@/lib/subscription";
 import { stripe } from "@/lib/stripe";
 import SiteFooter from "@/components/SiteFooter";
 import ManageBillingButton from "@/components/ManageBillingButton";
+import SignOutButton from "@/components/SignOutButton";
 
 export const metadata = {
   title: "Account — Align",
@@ -75,23 +76,27 @@ export default async function AccountPage({
   return (
     <>
       <nav>
-        <a href="https://livealign.co" className="logo">
+        <Link href="/" className="logo" aria-label="Align home">
           <img
             src="/brand/align-lockup-navy.svg"
             alt="Align"
             width={115}
             height={32}
           />
-        </a>
+        </Link>
         <div className="nav-links">
           <Link href="/app" className="nav-link">
             Your rehearsals
           </Link>
+          <a href="https://livealign.co" className="nav-link">
+            About
+          </a>
         </div>
       </nav>
 
       <main className="account-shell">
-        <div className="account-card">
+        <div className="account-column">
+          <div className="account-card">
           {reason === "payment_issue" && (
             <div className="account-banner" role="status">
               There&apos;s a problem with your latest payment. Update your billing
@@ -158,6 +163,9 @@ export default async function AccountPage({
               <Link href="/terms">Terms</Link>
             </nav>
           </div>
+          </div>
+
+          <SignOutButton />
         </div>
       </main>
 

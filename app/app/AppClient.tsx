@@ -287,6 +287,9 @@ function PickerScreen({
           <a href="/account" className="app-nav-link">
             Account
           </a>
+          <a href="https://livealign.co" className="app-nav-link">
+            About
+          </a>
           <form action={logoutAction}>
             <button type="submit" className="app-logout">
               Log out
