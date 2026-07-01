@@ -39,13 +39,6 @@ function lookupKeyFromSubscription(
 }
 
 export async function POST(request: Request) {
-  // TEMPORARY DEBUG — remove once the 400 is diagnosed.
-  console.error("[stripe-webhook] handler invoked", {
-    secretPresent: !!process.env.STRIPE_WEBHOOK_SECRET,
-    secretLength: process.env.STRIPE_WEBHOOK_SECRET?.length ?? 0,
-    hasSignatureHeader: !!request.headers.get("stripe-signature"),
-  });
-
   // Read the byte-exact raw body. Using an ArrayBuffer → Buffer (rather than
   // request.text()) preserves the exact bytes Stripe signed, avoiding any
   // text re-encoding that breaks signature verification under the App Router.
@@ -65,20 +58,9 @@ export async function POST(request: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (error) {
-    // TEMPORARY DEBUG — surface the real verification error. Strip after diagnosing.
-    console.error("[stripe-webhook] verification or handler error:", {
-      message: (error as any)?.message,
-      name: (error as any)?.name,
-      stack: (error as any)?.stack,
-    });
-    return NextResponse.json(
-      {
-        error: "Webhook error",
-        debug_message: (error as any)?.message ?? String(error),
-        debug_name: (error as any)?.name,
-      },
-      { status: 400 }
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[stripe-webhook] signature verification failed:", message);
+    return NextResponse.json({ error: "Webhook error" }, { status: 400 });
   }
 
   const supabase = createServiceRoleClient();
@@ -136,13 +118,10 @@ export async function POST(request: Request) {
         // after 12 billing cycles. Schedules can only be created from an
         // existing subscription, so this happens here, not at checkout.
         if (isFounding) {
-          // TEMPORARY DEBUG — surface why schedule creation silently fails.
+          // Schedule creation is best-effort: if it fails we still return 200
+          // (so Stripe doesn't retry the whole webhook) and leave
+          // stripe_subscription_schedule_id NULL for later reconciliation.
           try {
-            console.error(
-              "[stripe-webhook] creating subscription schedule for",
-              subscriptionId
-            );
-
             const [foundingPriceId, standardPriceId] = await Promise.all([
               priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
               priceIdForLookupKey(STANDARD_LOOKUP_KEY),
@@ -183,11 +162,6 @@ export async function POST(request: Request) {
               ],
             });
 
-            console.error(
-              "[stripe-webhook] schedule created successfully:",
-              schedule.id
-            );
-
             const { error: scheduleUpdateError } = await supabase
               .from("subscriptions")
               .update({
@@ -201,18 +175,17 @@ export async function POST(request: Request) {
                 `Failed to save schedule id: ${scheduleUpdateError.message}`
               );
             }
-
-            console.error("[stripe-webhook] DB updated with schedule id");
           } catch (scheduleError) {
-            console.error("[stripe-webhook] SCHEDULE CREATION FAILED:", {
-              message: (scheduleError as any)?.message,
-              type: (scheduleError as any)?.type,
-              code: (scheduleError as any)?.code,
-              stack: (scheduleError as any)?.stack,
-            });
-            // DO NOT re-throw — we still want the webhook to return 200 so Stripe
-            // doesn't retry forever. The row keeps a NULL
-            // stripe_subscription_schedule_id (the symptom we're debugging).
+            const message =
+              scheduleError instanceof Error
+                ? scheduleError.message
+                : String(scheduleError);
+            console.error(
+              `[stripe-webhook] subscription schedule creation failed for ${subscriptionId}:`,
+              message
+            );
+            // Deliberately not re-thrown — the webhook still returns 200 so
+            // Stripe doesn't retry the whole event.
           }
         }
         break;

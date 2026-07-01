@@ -20,17 +20,6 @@ async function priceIdForLookupKey(lookupKey: string): Promise<string> {
 }
 
 export async function POST(request: Request) {
-  // TEMPORARY DEBUG — remove once the 500 is diagnosed.
-  console.error(
-    "[checkout-route] STRIPE_SECRET_KEY present:",
-    !!process.env.STRIPE_SECRET_KEY
-  );
-  console.error(
-    "[checkout-route] SUPABASE_SERVICE_ROLE_KEY present:",
-    !!process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-  console.error("[checkout-route] handler invoked");
-
   try {
     const supabase = await createClient();
     const {
@@ -126,17 +115,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
-    // TEMPORARY DEBUG — unconditional error exposure. Strip after diagnosing.
     console.error("[create-checkout-session] error:", error);
-
     return NextResponse.json(
-      {
-        error: "Pricing is temporarily unavailable. Please try again.",
-        debug_message: (error as any)?.message ?? String(error),
-        debug_type: (error as any)?.type,
-        debug_code: (error as any)?.code,
-        debug_stack: (error as any)?.stack,
-      },
+      { error: "Pricing is temporarily unavailable. Please try again." },
       { status: 500 }
     );
   }

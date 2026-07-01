@@ -57,9 +57,7 @@ export default async function PricingPage() {
               <p className="pricing-note">
                 for 12 months, then $11.99/month
               </p>
-              <p className="pricing-spots">
-                {spotsRemaining} of {FOUNDING_CAP} founding spots left
-              </p>
+              <p className="pricing-spots">Limited spots left!</p>
               <SubscribeButton label="Claim your founding rate" />
             </>
           ) : (
