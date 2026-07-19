@@ -4,7 +4,10 @@ import { stripe } from "@/lib/stripe";
 
 const FOUNDING_CAP = 100;
 const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
-const STANDARD_LOOKUP_KEY = "align_standard_monthly";
+const STANDARD_MONTHLY_LOOKUP_KEY = "align_standard_monthly";
+const STANDARD_ANNUAL_LOOKUP_KEY = "align_standard_annual";
+
+type BillingInterval = "monthly" | "annual";
 
 async function priceIdForLookupKey(lookupKey: string): Promise<string> {
   const prices = await stripe.prices.list({
@@ -21,6 +24,13 @@ async function priceIdForLookupKey(lookupKey: string): Promise<string> {
 
 export async function POST(request: Request) {
   try {
+    // Optional billing interval from the POST body; defaults to monthly.
+    const body = (await request.json().catch(() => ({}))) as {
+      billing_interval?: string;
+    };
+    const billingInterval: BillingInterval =
+      body?.billing_interval === "annual" ? "annual" : "monthly";
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -64,7 +74,21 @@ export async function POST(request: Request) {
     }
 
     const isFounding = (foundingCount ?? 0) < FOUNDING_CAP;
-    const lookupKey = isFounding ? FOUNDING_LOOKUP_KEY : STANDARD_LOOKUP_KEY;
+
+    // Founding is monthly-only, so billing_interval is ignored (and recorded as
+    // NULL). Standard members pick monthly or annual.
+    let lookupKey: string;
+    let effectiveInterval: BillingInterval | null;
+    if (isFounding) {
+      lookupKey = FOUNDING_LOOKUP_KEY;
+      effectiveInterval = null;
+    } else if (billingInterval === "annual") {
+      lookupKey = STANDARD_ANNUAL_LOOKUP_KEY;
+      effectiveInterval = "annual";
+    } else {
+      lookupKey = STANDARD_MONTHLY_LOOKUP_KEY;
+      effectiveInterval = "monthly";
+    }
 
     const priceId = await priceIdForLookupKey(lookupKey);
 
@@ -100,6 +124,8 @@ export async function POST(request: Request) {
       metadata: {
         user_id: user.id,
         founding_member: isFounding ? "true" : "false",
+        // Empty string for founding (stored as NULL by the webhook).
+        billing_interval: effectiveInterval ?? "",
       },
       subscription_data: isFounding
         ? { metadata: { user_id: user.id, will_transition: "true" } }

@@ -9,8 +9,31 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
-const STANDARD_LOOKUP_KEY = "align_standard_monthly";
+// Founding members transition here after 12 months and stay for life.
+const FOUNDING_LOCKED_LOOKUP_KEY = "align_founding_locked_monthly";
+const STANDARD_MONTHLY_LOOKUP_KEY = "align_standard_monthly";
+const STANDARD_ANNUAL_LOOKUP_KEY = "align_standard_annual";
 const FOUNDING_ITERATIONS = 12;
+
+// Founding and founding-locked are both the "founding" tier; the two standard
+// prices are the "standard" tier.
+function tierForLookupKey(
+  lookupKey: string | null
+): "founding" | "standard" | null {
+  if (
+    lookupKey === FOUNDING_LOOKUP_KEY ||
+    lookupKey === FOUNDING_LOCKED_LOOKUP_KEY
+  ) {
+    return "founding";
+  }
+  if (
+    lookupKey === STANDARD_MONTHLY_LOOKUP_KEY ||
+    lookupKey === STANDARD_ANNUAL_LOOKUP_KEY
+  ) {
+    return "standard";
+  }
+  return null;
+}
 
 async function priceIdForLookupKey(lookupKey: string): Promise<string> {
   const prices = await stripe.prices.list({
@@ -79,6 +102,13 @@ export async function POST(request: Request) {
         const isFounding = session.metadata?.founding_member === "true";
         if (!userId) break;
 
+        // Founding is monthly-only → NULL. Standard carries monthly/annual.
+        const rawInterval = session.metadata?.billing_interval;
+        const billingInterval =
+          rawInterval === "monthly" || rawInterval === "annual"
+            ? rawInterval
+            : null;
+
         const customerId =
           typeof session.customer === "string"
             ? session.customer
@@ -101,6 +131,7 @@ export async function POST(request: Request) {
               stripe_subscription_id: subscriptionId,
               tier: isFounding ? "founding" : "standard",
               status: "active",
+              billing_interval: billingInterval,
               founding_member: isFounding,
               founding_locked_until: foundingLockedUntil
                 ? foundingLockedUntil.toISOString()
@@ -122,9 +153,11 @@ export async function POST(request: Request) {
           // (so Stripe doesn't retry the whole webhook) and leave
           // stripe_subscription_schedule_id NULL for later reconciliation.
           try {
-            const [foundingPriceId, standardPriceId] = await Promise.all([
+            // Phase 1 = $3.99 founding rate for 12 months; Phase 2 = the
+            // $11.99 founding-locked rate for life (NOT the standard rate).
+            const [foundingPriceId, foundingLockedPriceId] = await Promise.all([
               priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
-              priceIdForLookupKey(STANDARD_LOOKUP_KEY),
+              priceIdForLookupKey(FOUNDING_LOCKED_LOOKUP_KEY),
             ]);
 
             const schedule = await stripe.subscriptionSchedules.create({
@@ -155,9 +188,9 @@ export async function POST(request: Request) {
                   duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
                 },
                 {
-                  items: [{ price: standardPriceId, quantity: 1 }],
+                  items: [{ price: foundingLockedPriceId, quantity: 1 }],
                   // No start_date — Stripe anchors it to the end of Phase 1.
-                  // No end_date — runs indefinitely at the standard rate.
+                  // No end_date — runs indefinitely at the founding-locked rate.
                 },
               ],
             });
@@ -194,15 +227,14 @@ export async function POST(request: Request) {
       case "customer.subscription.updated": {
         const subscription = event.data.object;
         const lookupKey = lookupKeyFromSubscription(subscription);
+        const tier = tierForLookupKey(lookupKey);
 
         const update: Record<string, unknown> = {
           status: subscription.status,
           updated_at: new Date().toISOString(),
         };
-        if (lookupKey === STANDARD_LOOKUP_KEY) {
-          update.tier = "standard";
-        } else if (lookupKey === FOUNDING_LOOKUP_KEY) {
-          update.tier = "founding";
+        if (tier) {
+          update.tier = tier;
         }
 
         const { error } = await supabase

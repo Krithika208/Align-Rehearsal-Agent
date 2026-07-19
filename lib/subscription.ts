@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type SubscriptionTier = "founding" | "standard";
+export type BillingInterval = "monthly" | "annual";
 
 export type SubscriptionRow = {
   id: string;
@@ -11,6 +12,7 @@ export type SubscriptionRow = {
   stripe_subscription_schedule_id: string | null;
   tier: SubscriptionTier;
   status: string;
+  billing_interval: BillingInterval | null;
   founding_member: boolean;
   founding_locked_until: string | null;
   created_at: string;
@@ -20,6 +22,7 @@ export type SubscriptionRow = {
 export type SubscriptionInfo = {
   active: boolean;
   tier: SubscriptionTier | null;
+  billingInterval: BillingInterval | null;
   status: string;
   subscription: SubscriptionRow | null;
 };
@@ -35,7 +38,13 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { active: false, tier: null, status: "none", subscription: null };
+    return {
+      active: false,
+      tier: null,
+      billingInterval: null,
+      status: "none",
+      subscription: null,
+    };
   }
 
   const { data } = await supabase
@@ -45,13 +54,20 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo> {
     .maybeSingle();
 
   if (!data) {
-    return { active: false, tier: null, status: "none", subscription: null };
+    return {
+      active: false,
+      tier: null,
+      billingInterval: null,
+      status: "none",
+      subscription: null,
+    };
   }
 
   const row = data as SubscriptionRow;
   return {
     active: ACTIVE_STATUSES.includes(row.status),
     tier: row.tier,
+    billingInterval: row.billing_interval,
     status: row.status,
     subscription: row,
   };
