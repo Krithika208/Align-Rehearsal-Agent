@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
-import SubscribeButton from "@/components/SubscribeButton";
+import PaidPlanCard from "./PaidPlanCard";
 
 export const metadata = {
   title: "Pricing — Align",
 };
-
-const FOUNDING_CAP = 100;
 
 export default async function PricingPage({
   searchParams,
@@ -20,10 +18,6 @@ export default async function PricingPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { data: foundingCount } = await supabase.rpc("get_founding_count");
-  const spotsRemaining = Math.max(FOUNDING_CAP - (foundingCount ?? 0), 0);
-  const foundingOpen = spotsRemaining > 0;
 
   return (
     <>
@@ -52,52 +46,45 @@ export default async function PricingPage({
       </nav>
 
       <main className="pricing-shell">
-        {reason === "subscribe" && (
+        {reason === "free_limit_reached" && (
           <div className="pricing-banner" role="status">
-            An active subscription is needed to start rehearsing. Choose a plan
-            below to get going.
+            You&apos;ve used your 5 free rehearsals. Subscribe to keep
+            practising. Your past rehearsals are still in{" "}
+            <Link href="/rehearsals">My rehearsals</Link>.
           </div>
         )}
         <div className="section-label">Pricing</div>
         <h1 className="pricing-heading">
-          One plan. <em>Unlimited</em> practice.
+          Start free. <em>Unlimited</em> practice from $10.
         </h1>
         <p className="pricing-sub">
-          Rehearse the conversations you&apos;ve been avoiding — as many times
+          Rehearse the conversations you&apos;ve been avoiding, as many times
           as you need, with Jordan playing the other person.
         </p>
 
-        <div className="pricing-card">
-          {foundingOpen ? (
-            <>
-              <div className="pricing-badge">Founding rate</div>
+        <div className="pricing-grid">
+          <div className="pricing-plan">
+            <div className="pricing-card">
+              <div className="pricing-badge">Free</div>
               <div className="pricing-amount">
-                <span className="pricing-price">$3.99</span>
-                <span className="pricing-period">/ month</span>
+                <span className="pricing-price">$0</span>
               </div>
-              <p className="pricing-note">
-                for 12 months, then $11.99/month
-              </p>
-              <p className="pricing-spots">Limited spots left!</p>
-              <SubscribeButton label="Claim your founding rate" />
-            </>
-          ) : (
-            <>
-              <div className="pricing-badge">Standard</div>
-              <div className="pricing-amount">
-                <span className="pricing-price">$11.99</span>
-                <span className="pricing-period">/ month</span>
+              <p className="pricing-note">5 rehearsals. No card required.</p>
+              <div className="pricing-cta">
+                <Link href={user ? "/app" : "/signup"} className="btn-primary">
+                  Get started
+                </Link>
               </div>
-              <p className="pricing-note">Billed monthly. Cancel anytime.</p>
-              <SubscribeButton label="Subscribe" />
-            </>
-          )}
 
-          <ul className="pricing-features">
-            <li>Unlimited rehearsals with Jordan</li>
-            <li>All six launch scenarios — plus your own</li>
-            <li>A coaching debrief after every conversation</li>
-          </ul>
+              <ul className="pricing-features">
+                <li>5 lifetime rehearsals with Jordan</li>
+                <li>All six launch scenarios, plus your own</li>
+                <li>A coaching debrief after every conversation</li>
+              </ul>
+            </div>
+          </div>
+
+          <PaidPlanCard />
         </div>
 
         <p className="pricing-finecopy">

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 
-export type SubscriptionTier = "founding" | "standard";
+export type SubscriptionTier = "standard";
 export type BillingInterval = "monthly" | "annual";
 
 export type SubscriptionRow = {
@@ -9,12 +10,9 @@ export type SubscriptionRow = {
   user_id: string;
   stripe_customer_id: string;
   stripe_subscription_id: string;
-  stripe_subscription_schedule_id: string | null;
   tier: SubscriptionTier;
   status: string;
   billing_interval: BillingInterval | null;
-  founding_member: boolean;
-  founding_locked_until: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -22,12 +20,25 @@ export type SubscriptionRow = {
 export type SubscriptionInfo = {
   active: boolean;
   tier: SubscriptionTier | null;
-  billingInterval: BillingInterval | null;
   status: string;
+  billingInterval: BillingInterval | null;
   subscription: SubscriptionRow | null;
 };
 
 const ACTIVE_STATUSES = ["active", "trialing"];
+const PAYMENT_ISSUE_STATUSES = ["past_due", "incomplete"];
+
+const NO_SUBSCRIPTION: SubscriptionInfo = {
+  active: false,
+  tier: null,
+  status: "none",
+  billingInterval: null,
+  subscription: null,
+};
+
+export function isPaymentIssue(status: string): boolean {
+  return PAYMENT_ISSUE_STATUSES.includes(status);
+}
 
 // Fetch the signed-in user's subscription row. Returns a neutral "none" state
 // when the user is signed out or has no subscription yet.
@@ -37,15 +48,7 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return {
-      active: false,
-      tier: null,
-      billingInterval: null,
-      status: "none",
-      subscription: null,
-    };
-  }
+  if (!user) return NO_SUBSCRIPTION;
 
   const { data } = await supabase
     .from("subscriptions")
@@ -53,39 +56,73 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo> {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!data) {
-    return {
-      active: false,
-      tier: null,
-      billingInterval: null,
-      status: "none",
-      subscription: null,
-    };
-  }
+  if (!data) return NO_SUBSCRIPTION;
 
   const row = data as SubscriptionRow;
   return {
     active: ACTIVE_STATUSES.includes(row.status),
-    tier: row.tier,
-    billingInterval: row.billing_interval,
+    tier: "standard",
     status: row.status,
+    billingInterval: row.billing_interval,
     subscription: row,
   };
 }
 
-// Gate for /app and its rehearsal routes. Assumes the middleware has already
-// ensured the user is signed in. Redirects (server-side, before render, so no
-// flicker) when the user isn't entitled to the app experience.
-export async function requireActiveSubscription(): Promise<SubscriptionInfo> {
+// How many of their 5 lifetime free rehearsals the signed-in user has used.
+export async function getFreeSessionsUsed(): Promise<number> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { data } = await supabase
+    .from("usage_counters")
+    .select("free_sessions_used")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return data?.free_sessions_used ?? 0;
+}
+
+// The signed-in user's founding perk, or null if they don't have one.
+export async function getFoundingPerk(): Promise<FoundingPerk | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("founding_perks")
+    .select("claimed, claimed_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return data ?? null;
+}
+
+// Gate for /app. Assumes the middleware has already ensured the user is signed
+// in. Paid users go straight through; free users go through while they have
+// free rehearsals left. Redirects server-side, before render, so no flicker.
+export async function requireAppAccess(): Promise<{
+  info: SubscriptionInfo;
+  freeSessionsUsed: number | null;
+}> {
   const info = await getSubscriptionInfo();
 
-  if (info.status === "past_due" || info.status === "incomplete") {
+  if (isPaymentIssue(info.status)) {
     redirect("/account?reason=payment_issue");
   }
 
-  if (!info.active) {
-    redirect("/pricing?reason=subscribe");
+  if (info.active) {
+    return { info, freeSessionsUsed: null };
   }
 
-  return info;
+  const freeSessionsUsed = await getFreeSessionsUsed();
+  if (freeSessionsUsed >= FREE_SESSION_LIMIT) {
+    redirect("/pricing?reason=free_limit_reached");
+  }
+
+  return { info, freeSessionsUsed };
 }

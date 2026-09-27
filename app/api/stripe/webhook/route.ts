@@ -8,45 +8,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
-// Founding members transition here after 12 months and stay for life.
-const FOUNDING_LOCKED_LOOKUP_KEY = "align_founding_locked_monthly";
-const STANDARD_MONTHLY_LOOKUP_KEY = "align_standard_monthly";
-const STANDARD_ANNUAL_LOOKUP_KEY = "align_standard_annual";
-const FOUNDING_ITERATIONS = 12;
-
-// Founding and founding-locked are both the "founding" tier; the two standard
-// prices are the "standard" tier.
-function tierForLookupKey(
-  lookupKey: string | null
-): "founding" | "standard" | null {
-  if (
-    lookupKey === FOUNDING_LOOKUP_KEY ||
-    lookupKey === FOUNDING_LOCKED_LOOKUP_KEY
-  ) {
-    return "founding";
-  }
-  if (
-    lookupKey === STANDARD_MONTHLY_LOOKUP_KEY ||
-    lookupKey === STANDARD_ANNUAL_LOOKUP_KEY
-  ) {
-    return "standard";
-  }
-  return null;
-}
-
-async function priceIdForLookupKey(lookupKey: string): Promise<string> {
-  const prices = await stripe.prices.list({
-    lookup_keys: [lookupKey],
-    active: true,
-    limit: 1,
-  });
-  const price = prices.data[0];
-  if (!price) {
-    throw new Error(`No active Stripe price found for lookup_key "${lookupKey}"`);
-  }
-  return price.id;
-}
+// Both current prices are the single "standard" tier; the lookup key tells us
+// the billing interval.
+const INTERVAL_BY_LOOKUP_KEY: Record<string, "monthly" | "annual"> = {
+  align_monthly: "monthly",
+  align_annual: "annual",
+};
 
 // In the current API version the subscription id lives on the invoice's parent.
 function subscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
@@ -99,10 +66,8 @@ export async function POST(request: Request) {
         if (!subscriptionId) break;
 
         const userId = session.metadata?.user_id;
-        const isFounding = session.metadata?.founding_member === "true";
         if (!userId) break;
 
-        // Founding is monthly-only → NULL. Standard carries monthly/annual.
         const rawInterval = session.metadata?.billing_interval;
         const billingInterval =
           rawInterval === "monthly" || rawInterval === "annual"
@@ -114,14 +79,6 @@ export async function POST(request: Request) {
             ? session.customer
             : session.customer?.id;
 
-        let foundingLockedUntil: Date | null = null;
-        if (isFounding) {
-          foundingLockedUntil = new Date();
-          foundingLockedUntil.setMonth(
-            foundingLockedUntil.getMonth() + FOUNDING_ITERATIONS
-          );
-        }
-
         const { error: insertError } = await supabase
           .from("subscriptions")
           .upsert(
@@ -129,13 +86,9 @@ export async function POST(request: Request) {
               user_id: userId,
               stripe_customer_id: customerId ?? "",
               stripe_subscription_id: subscriptionId,
-              tier: isFounding ? "founding" : "standard",
+              tier: "standard",
               status: "active",
               billing_interval: billingInterval,
-              founding_member: isFounding,
-              founding_locked_until: foundingLockedUntil
-                ? foundingLockedUntil.toISOString()
-                : null,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "user_id" }
@@ -145,81 +98,15 @@ export async function POST(request: Request) {
           throw new Error(`Failed to insert subscription: ${insertError.message}`);
         }
 
-        // For founding members, schedule the auto-transition to standard rate
-        // after 12 billing cycles. Schedules can only be created from an
-        // existing subscription, so this happens here, not at checkout.
-        if (isFounding) {
-          // Schedule creation is best-effort: if it fails we still return 200
-          // (so Stripe doesn't retry the whole webhook) and leave
-          // stripe_subscription_schedule_id NULL for later reconciliation.
-          try {
-            // Phase 1 = $3.99 founding rate for 12 months; Phase 2 = the
-            // $11.99 founding-locked rate for life (NOT the standard rate).
-            const [foundingPriceId, foundingLockedPriceId] = await Promise.all([
-              priceIdForLookupKey(FOUNDING_LOOKUP_KEY),
-              priceIdForLookupKey(FOUNDING_LOCKED_LOOKUP_KEY),
-            ]);
-
-            const schedule = await stripe.subscriptionSchedules.create({
-              from_subscription: subscriptionId,
-            });
-
-            // Phase 1 needs a numeric Unix timestamp to anchor end dates —
-            // the string 'now' is accepted by the types but rejected at runtime
-            // on a from_subscription schedule. Use the subscription's current
-            // period start. In the 2026-05-27.dahlia API version that lives on
-            // the subscription item, not the top-level subscription; fall back
-            // to the schedule's own auto-populated first-phase start.
-            const subscription = await stripe.subscriptions.retrieve(
-              subscriptionId
-            );
-            const phase1Start =
-              subscription.items.data[0]?.current_period_start ??
-              schedule.phases[0]?.start_date;
-
-            await stripe.subscriptionSchedules.update(schedule.id, {
-              end_behavior: "release",
-              phases: [
-                {
-                  items: [{ price: foundingPriceId, quantity: 1 }],
-                  // Numeric timestamp anchor (not 'now').
-                  start_date: phase1Start,
-                  // 12 monthly billing cycles at the founding rate.
-                  duration: { interval: "month", interval_count: FOUNDING_ITERATIONS },
-                },
-                {
-                  items: [{ price: foundingLockedPriceId, quantity: 1 }],
-                  // No start_date — Stripe anchors it to the end of Phase 1.
-                  // No end_date — runs indefinitely at the founding-locked rate.
-                },
-              ],
-            });
-
-            const { error: scheduleUpdateError } = await supabase
-              .from("subscriptions")
-              .update({
-                stripe_subscription_schedule_id: schedule.id,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("stripe_subscription_id", subscriptionId);
-
-            if (scheduleUpdateError) {
-              throw new Error(
-                `Failed to save schedule id: ${scheduleUpdateError.message}`
-              );
-            }
-          } catch (scheduleError) {
-            const message =
-              scheduleError instanceof Error
-                ? scheduleError.message
-                : String(scheduleError);
-            console.error(
-              `[stripe-webhook] subscription schedule creation failed for ${subscriptionId}:`,
-              message
-            );
-            // Deliberately not re-thrown — the webhook still returns 200 so
-            // Stripe doesn't retry the whole event.
-          }
+        // First 100 paid users get a founding perk. The RPC returns the user's
+        // existing slot if they already have one, so a retried webhook never
+        // allocates twice or burns a second slot.
+        const { error: perkError } = await supabase.rpc(
+          "allocate_founding_perk",
+          { p_user_id: userId }
+        );
+        if (perkError) {
+          throw new Error(`Failed to allocate founding perk: ${perkError.message}`);
         }
         break;
       }
@@ -227,14 +114,18 @@ export async function POST(request: Request) {
       case "customer.subscription.updated": {
         const subscription = event.data.object;
         const lookupKey = lookupKeyFromSubscription(subscription);
-        const tier = tierForLookupKey(lookupKey);
+        const billingInterval = lookupKey
+          ? INTERVAL_BY_LOOKUP_KEY[lookupKey]
+          : undefined;
 
         const update: Record<string, unknown> = {
           status: subscription.status,
           updated_at: new Date().toISOString(),
         };
-        if (tier) {
-          update.tier = tier;
+        // Switching monthly ↔ annual in the Customer Portal lands here.
+        if (billingInterval) {
+          update.tier = "standard";
+          update.billing_interval = billingInterval;
         }
 
         const { error } = await supabase

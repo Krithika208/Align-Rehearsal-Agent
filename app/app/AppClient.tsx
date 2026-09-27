@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
+import FoundingPerkCard from "@/components/FoundingPerkCard";
+import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
   RELATIONSHIPS,
   SCENARIOS,
@@ -17,16 +19,28 @@ type TranscriptTurn = {
   text: string;
 };
 
+// App-signalled session timing. The agent can't time itself, so the app sends
+// these cues. The strings must match the ElevenLabs system prompt exactly.
+const NUDGE_AT_MS = 15 * 60 * 1000;
+const WRAP_AT_MS = 18 * 60 * 1000;
+const HARD_STOP_AT_MS = 20 * 60 * 1000;
+const NUDGE_CUE = "[Time cue: 15 minutes elapsed]";
+const WRAP_CUE = "[Time cue: 18 minutes elapsed - wrap and debrief now]";
+
 type ActiveCall = {
   conversation: Awaited<ReturnType<typeof Conversation.startSession>>;
   dbId: string;
 };
 
 export default function AppClient({
+  freeSessionsUsed: initialFreeSessionsUsed,
+  foundingPerk,
   userEmail,
   userName,
   logoutAction,
 }: {
+  freeSessionsUsed: number | null;
+  foundingPerk: FoundingPerk | null;
   userEmail: string;
   userName: string | null;
   logoutAction: () => Promise<void>;
@@ -42,10 +56,14 @@ export default function AppClient({
   const [wrappingUp, setWrappingUp] = useState(false);
   const [teachingDisabled, setTeachingDisabled] = useState(false);
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
+  const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
+  const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
   const transcriptRef = useRef<TranscriptTurn[]>([]);
+  const wrappingUpRef = useRef(false);
+  const stopTimerRef = useRef<(() => void) | null>(null);
 
   const appendTurn = useCallback((role: "user" | "agent", text: string) => {
     const trimmed = text?.trim();
@@ -77,6 +95,7 @@ export default function AppClient({
     setTranscript([]);
     transcriptRef.current = [];
     setWrappingUp(false);
+    wrappingUpRef.current = false;
     turnIdRef.current = 0;
     try {
       const res = await fetch("/api/elevenlabs/start-conversation", {
@@ -91,12 +110,27 @@ export default function AppClient({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (body.code === "free_limit_reached") {
+          window.location.href = "/pricing?reason=free_limit_reached";
+          return;
+        }
+        if (body.code === "payment_issue") {
+          window.location.href = "/account?reason=payment_issue";
+          return;
+        }
+        if (body.code === "fair_use_cap") {
+          setFairUseMessage(body.error);
+          return;
+        }
         throw new Error(body.error || `Failed to start (${res.status})`);
       }
-      const { conversation_db_id, signed_url } = (await res.json()) as {
-        conversation_db_id: string;
-        signed_url: string;
-      };
+      const { conversation_db_id, signed_url, free_sessions_used } =
+        (await res.json()) as {
+          conversation_db_id: string;
+          signed_url: string;
+          free_sessions_used: number | null;
+        };
+      if (free_sessions_used !== null) setFreeSessionsUsed(free_sessions_used);
 
       const conversation = await Conversation.startSession({
         signedUrl: signed_url,
@@ -125,6 +159,7 @@ export default function AppClient({
       });
 
       activeCallRef.current = { conversation, dbId: conversation_db_id };
+      startSessionTimer();
       setStep("calling");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -137,6 +172,8 @@ export default function AppClient({
     const active = activeCallRef.current;
     if (!active) return;
     activeCallRef.current = null;
+    stopTimerRef.current?.();
+    stopTimerRef.current = null;
     const elId = active.conversation.getId?.() ?? null;
     const transcriptPayload = transcriptRef.current.map((t) => ({
       source: t.role === "agent" ? "ai" : "user",
@@ -159,6 +196,64 @@ export default function AppClient({
     setStep("complete");
   }, []);
 
+  // Runs from the moment the session connects. Elapsed time comes from
+  // performance.now() deltas, so a throttled or backgrounded tab catches up on
+  // the next tick (or on refocus) rather than drifting. Cancelled by
+  // finalizeCall when the call ends for any reason.
+  const startSessionTimer = () => {
+    stopTimerRef.current?.();
+    const startedAt = performance.now();
+    let nudgeSent = false;
+    let wrapSent = false;
+
+    const tick = () => {
+      const active = activeCallRef.current;
+      if (!active) return;
+      const elapsed = performance.now() - startedAt;
+
+      if (elapsed >= HARD_STOP_AT_MS) {
+        // Deterministic hard stop: hang up and go to the complete screen even
+        // if endSession hangs. finalizeCall only runs once.
+        active.conversation.endSession().catch(() => {});
+        void finalizeCall();
+        return;
+      }
+      if (!wrapSent && elapsed >= WRAP_AT_MS) {
+        wrapSent = true;
+        nudgeSent = true;
+        // Skipped if the user already pressed "Wrap up & debrief".
+        if (!wrappingUpRef.current) {
+          try {
+            active.conversation.sendUserMessage(WRAP_CUE);
+            wrappingUpRef.current = true;
+            setWrappingUp(true);
+          } catch {
+            /* best-effort: the 20:00 hard stop still applies */
+          }
+        }
+        return;
+      }
+      if (!nudgeSent && elapsed >= NUDGE_AT_MS) {
+        nudgeSent = true;
+        try {
+          active.conversation.sendContextualUpdate(NUDGE_CUE);
+        } catch {
+          /* best-effort */
+        }
+      }
+    };
+
+    const interval = window.setInterval(tick, 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    stopTimerRef.current = () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  };
+
   const requestTeachingMode = () => {
     const active = activeCallRef.current;
     if (!active || teachingDisabled) return;
@@ -179,6 +274,7 @@ export default function AppClient({
     try {
       active.conversation.sendUserMessage(message);
       appendTurn("user", message);
+      wrappingUpRef.current = true;
       setWrappingUp(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't send wrap-up");
@@ -201,6 +297,7 @@ export default function AppClient({
 
   useEffect(() => {
     return () => {
+      stopTimerRef.current?.();
       const active = activeCallRef.current;
       if (active) {
         active.conversation.endSession().catch(() => {});
@@ -227,6 +324,7 @@ export default function AppClient({
   if (step === "complete") {
     return (
       <CompleteScreen
+        foundingPerk={foundingPerk}
         conversationId={lastConversationId}
         onAnother={backToPicker}
         onDone={() => {
@@ -251,12 +349,16 @@ export default function AppClient({
         onStart={startRehearsal}
         starting={starting}
         error={error}
+        freeSessionsUsed={freeSessionsUsed}
+        fairUseMessage={fairUseMessage}
+        onDismissFairUse={() => setFairUseMessage(null)}
       />
     );
   }
 
   return (
     <PickerScreen
+      freeSessionsUsed={freeSessionsUsed}
       greeting={greeting}
       onPick={pickScenario}
       logoutAction={logoutAction}
@@ -264,11 +366,45 @@ export default function AppClient({
   );
 }
 
+function FreeSessionsIndicator({ used }: { used: number | null }) {
+  if (used === null) return null;
+  return (
+    <p className="free-indicator">
+      {Math.min(used, FREE_SESSION_LIMIT)} of {FREE_SESSION_LIMIT} free
+      rehearsals used ·{" "}
+      <a href="/pricing" className="free-indicator-link">
+        See plans
+      </a>
+    </p>
+  );
+}
+
+function FairUseModal({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
+      <div className="modal-card">
+        <p className="modal-text">{message}</p>
+        <button type="button" className="btn-primary" onClick={onClose}>
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PickerScreen({
+  freeSessionsUsed,
   greeting,
   onPick,
   logoutAction,
 }: {
+  freeSessionsUsed: number | null;
   greeting: string;
   onPick: (s: Scenario) => void;
   logoutAction: () => Promise<void>;
@@ -298,6 +434,7 @@ function PickerScreen({
         </div>
       </header>
       <div className="app-inner">
+        <FreeSessionsIndicator used={freeSessionsUsed} />
         <div className="section-label">Pick a scenario</div>
         <h1 className="app-heading">
           What do you want to rehearse?
@@ -337,6 +474,9 @@ function SetupScreen({
   onStart,
   starting,
   error,
+  freeSessionsUsed,
+  fairUseMessage,
+  onDismissFairUse,
 }: {
   scenario: Scenario;
   relationship: Relationship | null;
@@ -347,6 +487,9 @@ function SetupScreen({
   onStart: () => void;
   starting: boolean;
   error: string | null;
+  freeSessionsUsed: number | null;
+  fairUseMessage: string | null;
+  onDismissFairUse: () => void;
 }) {
   const canStart = !!relationship && situation.trim().length > 0 && !starting;
   return (
@@ -360,6 +503,7 @@ function SetupScreen({
         </a>
       </header>
       <div className="app-inner app-inner-narrow">
+        <FreeSessionsIndicator used={freeSessionsUsed} />
         <div className="section-label">Setup</div>
         <h1 className="app-heading">
           <span className="setup-icon" aria-hidden>{scenario.icon}</span>
@@ -408,6 +552,9 @@ function SetupScreen({
           {starting ? "Connecting…" : "Start rehearsal"}
         </button>
       </div>
+      {fairUseMessage && (
+        <FairUseModal message={fairUseMessage} onClose={onDismissFairUse} />
+      )}
     </main>
   );
 }
@@ -525,10 +672,12 @@ function CallScreen({
 }
 
 function CompleteScreen({
+  foundingPerk,
   conversationId,
   onAnother,
   onDone,
 }: {
+  foundingPerk: FoundingPerk | null;
   conversationId: string | null;
   onAnother: () => void;
   onDone: () => void;
@@ -542,6 +691,9 @@ function CompleteScreen({
           That&apos;s the practice rep done. Want to go again, or save it for
           later?
         </p>
+        {foundingPerk && !foundingPerk.claimed && (
+          <FoundingPerkCard perk={foundingPerk} variant="debrief" />
+        )}
         <div className="complete-actions">
           <button type="button" className="btn-primary" onClick={onAnother}>
             Practice another

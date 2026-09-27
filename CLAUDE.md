@@ -28,8 +28,10 @@ Help people move from feeling **trapped at work** to feeling **empowered**, by l
 
 ## Pricing
 
-- **Founding 1,000:** £3.99/month — 5 rehearsals/month cap, grandfathered for 12 months
-- **Standard:** £8.99/month after the founding cohort fills
+- **Free:** $0, 5 rehearsals lifetime, no card
+- **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
+- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed.
+- **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Build philosophy
 

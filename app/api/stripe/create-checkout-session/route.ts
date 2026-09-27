@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 
-const FOUNDING_CAP = 100;
-const FOUNDING_LOOKUP_KEY = "align_founding_monthly";
-const STANDARD_MONTHLY_LOOKUP_KEY = "align_standard_monthly";
-const STANDARD_ANNUAL_LOOKUP_KEY = "align_standard_annual";
+const LOOKUP_KEY_BY_INTERVAL = {
+  monthly: "align_monthly",
+  annual: "align_annual",
+} as const;
 
-type BillingInterval = "monthly" | "annual";
+type BillingInterval = keyof typeof LOOKUP_KEY_BY_INTERVAL;
 
 async function priceIdForLookupKey(lookupKey: string): Promise<string> {
   const prices = await stripe.prices.list({
@@ -60,37 +60,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Decide tier. The founding count is read atomically via a SECURITY DEFINER
-    // RPC; the UNIQUE(user_id) constraint plus the webhook insert are the real
-    // backstop, so this is a best-effort gate on the 100-spot cap at checkout time.
-    const { data: foundingCount, error: countError } = await supabase.rpc(
-      "get_founding_count"
+    const priceId = await priceIdForLookupKey(
+      LOOKUP_KEY_BY_INTERVAL[billingInterval]
     );
-    if (countError) {
-      return NextResponse.json(
-        { error: "Could not determine pricing. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    const isFounding = (foundingCount ?? 0) < FOUNDING_CAP;
-
-    // Founding is monthly-only, so billing_interval is ignored (and recorded as
-    // NULL). Standard members pick monthly or annual.
-    let lookupKey: string;
-    let effectiveInterval: BillingInterval | null;
-    if (isFounding) {
-      lookupKey = FOUNDING_LOOKUP_KEY;
-      effectiveInterval = null;
-    } else if (billingInterval === "annual") {
-      lookupKey = STANDARD_ANNUAL_LOOKUP_KEY;
-      effectiveInterval = "annual";
-    } else {
-      lookupKey = STANDARD_MONTHLY_LOOKUP_KEY;
-      effectiveInterval = "monthly";
-    }
-
-    const priceId = await priceIdForLookupKey(lookupKey);
 
     // Create or reuse the Stripe Customer for this user.
     let customerId: string;
@@ -123,13 +95,9 @@ export async function POST(request: Request) {
       customer_update: { address: "auto" },
       metadata: {
         user_id: user.id,
-        founding_member: isFounding ? "true" : "false",
-        // Empty string for founding (stored as NULL by the webhook).
-        billing_interval: effectiveInterval ?? "",
+        billing_interval: billingInterval,
       },
-      subscription_data: isFounding
-        ? { metadata: { user_id: user.id, will_transition: "true" } }
-        : { metadata: { user_id: user.id } },
+      subscription_data: { metadata: { user_id: user.id } },
     });
 
     if (!checkoutSession.url) {

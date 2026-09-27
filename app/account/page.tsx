@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscriptionInfo } from "@/lib/subscription";
+import { getFoundingPerk, getSubscriptionInfo } from "@/lib/subscription";
 import { stripe } from "@/lib/stripe";
 import SiteFooter from "@/components/SiteFooter";
 import ManageBillingButton from "@/components/ManageBillingButton";
 import SignOutButton from "@/components/SignOutButton";
+import FoundingPerkCard from "@/components/FoundingPerkCard";
 
 export const metadata = {
   title: "Account — Align",
 };
 
-const PRICE_BY_TIER: Record<string, string> = {
-  founding: "$3.99/month",
-  standard: "$11.99/month",
+const PLAN_BY_INTERVAL: Record<string, { label: string; price: string }> = {
+  monthly: { label: "Monthly", price: "$10/month" },
+  annual: { label: "Annual", price: "$100/year" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -64,7 +65,9 @@ export default async function AccountPage({
 
   if (!user) redirect("/login?redirectTo=/account");
 
-  const { subscription, tier, status } = await getSubscriptionInfo();
+  const [{ subscription, status, billingInterval }, foundingPerk] =
+    await Promise.all([getSubscriptionInfo(), getFoundingPerk()]);
+  const plan = billingInterval ? PLAN_BY_INTERVAL[billingInterval] : null;
 
   let nextBillingDate: number | null = null;
   if (subscription) {
@@ -106,15 +109,21 @@ export default async function AccountPage({
           {subscription ? (
             <>
               <div className="section-label">Your subscription</div>
-              <h1 className="account-heading">
-                {tier === "founding" ? "Founding member" : "Standard"}
-              </h1>
+              <h1 className="account-heading">Align</h1>
 
               <dl className="account-details">
-                <div className="account-row">
-                  <dt>Price</dt>
-                  <dd>{PRICE_BY_TIER[tier ?? "standard"]}</dd>
-                </div>
+                {plan && (
+                  <>
+                    <div className="account-row">
+                      <dt>Billing</dt>
+                      <dd>{plan.label}</dd>
+                    </div>
+                    <div className="account-row">
+                      <dt>Price</dt>
+                      <dd>{plan.price}</dd>
+                    </div>
+                  </>
+                )}
                 <div className="account-row">
                   <dt>Status</dt>
                   <dd>{STATUS_LABELS[status] ?? status}</dd>
@@ -127,13 +136,8 @@ export default async function AccountPage({
                 )}
               </dl>
 
-              {tier === "founding" && subscription.founding_locked_until && (
-                <p className="account-note">
-                  Your founding rate is locked until{" "}
-                  <strong>{formatDate(subscription.founding_locked_until)}</strong>.
-                  After that, your subscription will automatically continue at
-                  $11.99/month.
-                </p>
+              {foundingPerk && (
+                <FoundingPerkCard perk={foundingPerk} variant="account" />
               )}
 
               <ManageBillingButton />
@@ -141,9 +145,9 @@ export default async function AccountPage({
           ) : (
             <>
               <div className="section-label">Account</div>
-              <h1 className="account-heading">No active subscription</h1>
+              <h1 className="account-heading">Free plan</h1>
               <p className="account-note">
-                You don&apos;t have an active Align subscription yet.
+                You get 5 free rehearsals. Subscribe for unlimited practice.
               </p>
               <div className="account-action">
                 <Link href="/pricing" className="btn-primary">

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export default function SubscribeButton({ label }: { label: string }) {
+export default function SubscribeButton({
+  label,
+  billingInterval,
+}: {
+  label: string;
+  billingInterval: "monthly" | "annual";
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manageHref, setManageHref] = useState<string | null>(null);
@@ -15,6 +21,8 @@ export default function SubscribeButton({ label }: { label: string }) {
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billing_interval: billingInterval }),
       });
       const data = await res.json();
 

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import {
+  createClient,
+  createServiceRoleClient,
+} from "@/lib/supabase/server";
+import { FREE_SESSION_LIMIT, PAID_MONTHLY_FAIR_USE_CAP } from "@/lib/plans";
+import { isPaymentIssue } from "@/lib/subscription";
 
 export const runtime = "nodejs";
 
@@ -44,6 +49,70 @@ export async function POST(req: Request) {
       { error: "scenario_slug, relationship and situation are required" },
       { status: 400 }
     );
+  }
+
+  // Count this session before connecting. Paid users are checked against the
+  // monthly fair-use cap; free users against their 5 lifetime rehearsals. The
+  // count is kept even if the ElevenLabs connection later fails.
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const status = sub?.status ?? "none";
+
+  if (isPaymentIssue(status)) {
+    return NextResponse.json(
+      { error: "There's a problem with your payment.", code: "payment_issue" },
+      { status: 402 }
+    );
+  }
+
+  const service = createServiceRoleClient();
+  let freeSessionsUsed: number | null = null;
+
+  if (status === "active" || status === "trialing") {
+    const { data: count, error } = await service.rpc(
+      "increment_paid_session_count",
+      { p_user_id: user.id }
+    );
+    if (error) {
+      return NextResponse.json(
+        { error: "Couldn't start your rehearsal. Please try again." },
+        { status: 500 }
+      );
+    }
+    if ((count as number) > PAID_MONTHLY_FAIR_USE_CAP) {
+      return NextResponse.json(
+        {
+          error:
+            "You've had 30 rehearsals this month — take a breath. Your fresh 30 arrive on the 1st.",
+          code: "fair_use_cap",
+        },
+        { status: 429 }
+      );
+    }
+  } else {
+    const { data: count, error } = await service.rpc(
+      "increment_free_session_count",
+      { p_user_id: user.id }
+    );
+    if (error) {
+      return NextResponse.json(
+        { error: "Couldn't start your rehearsal. Please try again." },
+        { status: 500 }
+      );
+    }
+    if ((count as number) > FREE_SESSION_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "You've used your 5 free rehearsals.",
+          code: "free_limit_reached",
+        },
+        { status: 403 }
+      );
+    }
+    freeSessionsUsed = count as number;
   }
 
   const elRes = await fetch(
@@ -94,5 +163,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     conversation_db_id: inserted.id,
     signed_url,
+    free_sessions_used: freeSessionsUsed,
   });
 }

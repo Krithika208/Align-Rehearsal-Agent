@@ -1310,6 +1310,7 @@ footer a:hover { text-decoration: underline; }
   .legal-article { padding: 2rem 1.5rem; border-radius: 12px; }
   .pricing-shell { padding: 7rem 1.25rem 3rem; }
   .pricing-card { padding: 2.25rem 1.5rem; }
+  .pricing-grid { grid-template-columns: 1fr; }
 }
 
 /* ── PRICING ── */
@@ -1632,4 +1633,127 @@ footer a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
   .account-shell { padding: 7rem 1.25rem 3rem; }
   .account-card { padding: 2.25rem 1.5rem; }
+}
+
+/* ── PRICING v2: free + paid side by side ── */
+.pricing-grid {
+  width: 100%;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.pricing-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.pricing-grid .pricing-card {
+  max-width: none;
+}
+.pricing-plan .pricing-spots {
+  margin-top: 1rem;
+  max-width: 340px;
+  line-height: 1.5;
+}
+.pricing-cta a.btn-primary {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+}
+.pricing-banner a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pricing-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  margin: 0 0 1.5rem;
+  border-radius: 100px;
+  background: var(--cream-warm);
+  border: 1px solid var(--border-subtle);
+}
+.pricing-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.pricing-toggle-active {
+  background: #ffffff;
+  color: var(--navy);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(13, 46, 78, 0.08);
+}
+
+/* ── FREE-TIER INDICATOR ── */
+.free-indicator {
+  display: inline-block;
+  margin: 0 0 1.25rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  background: var(--teal-glow);
+  color: var(--navy);
+  font-size: 0.82rem;
+}
+.free-indicator-link {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── FAIR-USE MODAL ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 29, 51, 0.45);
+}
+.modal-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.75rem;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(13, 46, 78, 0.18);
+}
+.modal-text {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ── FOUNDING PERK ── */
+.perk-card {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--cream-warm);
+  border: 1px solid rgba(196, 148, 58, 0.35);
+  text-align: left;
+}
+.perk-text {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--navy);
+}
+.perk-btn {
+  display: inline-flex;
+}
+.perk-claimed {
+  margin: 1.25rem 0;
 }
