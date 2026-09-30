@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Effective date:** 13 May 2026
-**Last updated:** 13 May 2026
+**Last updated:** 30 September 2026
 
 ## 1. Who we are
 
@@ -133,6 +133,8 @@ We protect your data using industry-standard security measures, including:
 - Encryption at rest (provided by our database infrastructure)
 - Role-based access controls
 - Regular security updates
+
+Your rehearsal transcripts are encrypted at rest. They are not accessible to Align team members through our database systems, and are not readable in the event of a data breach affecting our storage layer. Only you can view your own transcripts through your account.
 
 No system is perfectly secure. If we become aware of a personal data breach that is likely to result in significant harm or significant impact on your rights, we will notify the relevant authorities and you in line with our legal obligations.
 

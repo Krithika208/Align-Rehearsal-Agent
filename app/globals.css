@@ -1786,3 +1786,23 @@ footer a:hover { text-decoration: underline; }
   color: var(--navy);
   font-weight: 600;
 }
+
+/* ── OUTCOME CARD (Rehearsal complete) ── */
+.outcome-card {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+}
+.outcome-q {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--navy);
+}
+.outcome-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}

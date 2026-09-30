@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
+import OutcomeCard from "@/components/OutcomeCard";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
   RELATIONSHIPS,
@@ -718,6 +719,7 @@ function CompleteScreen({
           That&apos;s the practice rep done. Want to go again, or save it for
           later?
         </p>
+        {conversationId && <OutcomeCard rehearsalId={conversationId} />}
         {foundingPerk && !foundingPerk.claimed && (
           <FoundingPerkCard perk={foundingPerk} variant="debrief" />
         )}

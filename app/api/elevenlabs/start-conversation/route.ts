@@ -5,6 +5,7 @@ import {
 } from "@/lib/supabase/server";
 import { FREE_SESSION_LIMIT, PAID_MONTHLY_FAIR_USE_CAP } from "@/lib/plans";
 import { isPaymentIssue } from "@/lib/subscription";
+import { encryptText, toBytea, type EncryptedField } from "@/lib/encryption";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,20 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "scenario_slug, relationship and situation are required" },
       { status: 400 }
+    );
+  }
+
+  // Encrypt the situation before anything else, so a missing key fails the
+  // request without using up one of the user's sessions. Never stored as
+  // plaintext.
+  let encSituation: EncryptedField;
+  try {
+    encSituation = encryptText(situation, user.id, "situation");
+  } catch (err) {
+    console.error("[start-conversation] encryption failed:", err);
+    return NextResponse.json(
+      { error: "Couldn't start your rehearsal. Please try again later." },
+      { status: 500 }
     );
   }
 
@@ -159,7 +174,9 @@ export async function POST(req: Request) {
       user_id: user.id,
       scenario_slug,
       relationship,
-      situation,
+      encrypted_situation: toBytea(encSituation.ciphertext),
+      situation_iv: toBytea(encSituation.iv),
+      situation_key: toBytea(encSituation.wrappedKey),
       started_at: new Date().toISOString(),
       status: "in_progress",
     })

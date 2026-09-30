@@ -34,6 +34,12 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
+## Privacy
+
+- Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
+- ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
+- `rehearsal_outcomes` captures "did you have the real conversation?" on the complete screen. Delayed follow-up is future work.
+
 ## Build philosophy
 
 Ship fast, iterate fast. Simplest thing that works. No over-engineering. No premature abstractions. Don't build for hypothetical future requirements.
