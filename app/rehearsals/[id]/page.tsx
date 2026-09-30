@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
-import { SCENARIOS } from "../../app/scenarios";
+import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
 export const metadata = {
   title: "Rehearsal — Align",
@@ -72,7 +72,7 @@ export default async function RehearsalDetailPage({
   const scenario = row.scenario_slug
     ? SCENARIO_BY_SLUG[row.scenario_slug]
     : null;
-  const title = scenario?.title ?? row.scenario_slug ?? "Rehearsal";
+  const title = scenarioTitle(row.scenario_slug);
   const icon = scenario?.icon ?? "💬";
   const turns = normalizeTranscript(row.transcript);
 

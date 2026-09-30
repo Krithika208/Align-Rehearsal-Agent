@@ -9,6 +9,7 @@ import {
   SCENARIOS,
   type Relationship,
   type Scenario,
+  type Voice,
 } from "./scenarios";
 
 type Step = "pick" | "setup" | "calling" | "complete";
@@ -35,12 +36,14 @@ type ActiveCall = {
 export default function AppClient({
   freeSessionsUsed: initialFreeSessionsUsed,
   foundingPerk,
+  initialVoice,
   userEmail,
   userName,
   logoutAction,
 }: {
   freeSessionsUsed: number | null;
   foundingPerk: FoundingPerk | null;
+  initialVoice: Voice;
   userEmail: string;
   userName: string | null;
   logoutAction: () => Promise<void>;
@@ -49,6 +52,7 @@ export default function AppClient({
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [situation, setSituation] = useState("");
+  const [voice, setVoice] = useState<Voice>(initialVoice);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
@@ -106,6 +110,7 @@ export default function AppClient({
           scenario_title: scenario.title,
           relationship,
           situation: situation.trim(),
+          voice,
         }),
       });
       if (!res.ok) {
@@ -135,7 +140,7 @@ export default function AppClient({
       const conversation = await Conversation.startSession({
         signedUrl: signed_url,
         dynamicVariables: {
-          scenario: scenario.title,
+          scenario: scenario.label,
           relationship,
           situation: situation.trim(),
         },
@@ -349,6 +354,8 @@ export default function AppClient({
         onStart={startRehearsal}
         starting={starting}
         error={error}
+        voice={voice}
+        setVoice={setVoice}
         freeSessionsUsed={freeSessionsUsed}
         fairUseMessage={fairUseMessage}
         onDismissFairUse={() => setFairUseMessage(null)}
@@ -474,6 +481,8 @@ function SetupScreen({
   onStart,
   starting,
   error,
+  voice,
+  setVoice,
   freeSessionsUsed,
   fairUseMessage,
   onDismissFairUse,
@@ -487,6 +496,8 @@ function SetupScreen({
   onStart: () => void;
   starting: boolean;
   error: string | null;
+  voice: Voice;
+  setVoice: (v: Voice) => void;
   freeSessionsUsed: number | null;
   fairUseMessage: string | null;
   onDismissFairUse: () => void;
@@ -542,6 +553,22 @@ function SetupScreen({
         </div>
 
         {error && <div className="auth-error">{error}</div>}
+
+        <div className="voice-choice" role="radiogroup" aria-label="Jordan's voice">
+          <span className="voice-choice-label">Jordan&apos;s voice:</span>
+          {(["female", "male"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={voice === v}
+              className={`voice-choice-btn ${voice === v ? "voice-choice-active" : ""}`}
+              onClick={() => setVoice(v)}
+            >
+              {v === "female" ? "Female" : "Male"}
+            </button>
+          ))}
+        </div>
 
         <button
           type="button"

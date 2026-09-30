@@ -28,6 +28,9 @@ export default async function AppHome() {
     (user.user_metadata?.name as string | undefined) ??
     null;
 
+  const initialVoice =
+    user.user_metadata?.preferred_voice === "male" ? "male" : "female";
+
   const [{ freeSessionsUsed }, foundingPerk] = await Promise.all([
     requireAppAccess(),
     getFoundingPerk(),
@@ -38,6 +41,7 @@ export default async function AppHome() {
       <AppClient
         freeSessionsUsed={freeSessionsUsed}
         foundingPerk={foundingPerk}
+        initialVoice={initialVoice}
         userEmail={user.email ?? ""}
         userName={fullName}
         logoutAction={logout}

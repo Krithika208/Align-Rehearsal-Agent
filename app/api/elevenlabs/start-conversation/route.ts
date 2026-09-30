@@ -9,18 +9,6 @@ import { isPaymentIssue } from "@/lib/subscription";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_AGENT_ID;
-  if (!apiKey || !agentId) {
-    return NextResponse.json(
-      {
-        error:
-          "Server misconfigured: ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID must be set.",
-      },
-      { status: 500 }
-    );
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,6 +21,7 @@ export async function POST(req: Request) {
     scenario_slug?: string;
     relationship?: string;
     situation?: string;
+    voice?: string;
   };
   try {
     body = await req.json();
@@ -43,6 +32,30 @@ export async function POST(req: Request) {
   const scenario_slug = body.scenario_slug?.trim();
   const relationship = body.relationship?.trim();
   const situation = body.situation?.trim();
+
+  // Two Jordan agents with identical prompts; only the voice differs.
+  const voice = body.voice === "male" ? "male" : "female";
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const agentId =
+    voice === "male"
+      ? process.env.ELEVENLABS_AGENT_MALE_ID
+      : process.env.ELEVENLABS_AGENT_FEMALE_ID;
+  if (!apiKey || !agentId) {
+    return NextResponse.json(
+      {
+        error:
+          "Server misconfigured: ELEVENLABS_API_KEY, ELEVENLABS_AGENT_MALE_ID and ELEVENLABS_AGENT_FEMALE_ID must be set.",
+      },
+      { status: 500 }
+    );
+  }
+
+  // Remember the choice for next time. Best-effort: never blocks the rehearsal.
+  if (user.user_metadata?.preferred_voice !== voice) {
+    await supabase.auth
+      .updateUser({ data: { preferred_voice: voice } })
+      .catch(() => {});
+  }
 
   if (!scenario_slug || !relationship || !situation) {
     return NextResponse.json(

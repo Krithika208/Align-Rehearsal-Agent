@@ -12,19 +12,20 @@ B2C subscription. Built by Krithika (solo founder, ICF PCC-certified coach).
 
 Help people move from feeling **trapped at work** to feeling **empowered**, by letting them rehearse the conversations they've been avoiding.
 
-## Six launch scenarios
+## Scenarios
 
-**Workplace**
-1. Negotiate a raise or promotion
-2. Push back on a difficult stakeholder
-3. Deliver difficult feedback to a stakeholder
+Five themes plus Custom (defined in `app/app/scenarios.ts`). Jordan receives the UPPERCASE label as `{{scenario}}`; the ElevenLabs prompt matches these exact strings.
 
-**Founder**
-4. Pitch investors with shaky metrics
-5. Difficult conversation with a co-founder
-6. Let go of an early employee
+1. Negotiate (`NEGOTIATE`)
+2. Push back on a stakeholder (`PUSH BACK ON A STAKEHOLDER`)
+3. Deliver tough feedback (`DELIVER TOUGH FEEDBACK`)
+4. Receive difficult news (`RECEIVE DIFFICULT NEWS`)
+5. Deliver difficult news (`DELIVER DIFFICULT NEWS`)
+6. Custom (`CUSTOM`)
 
-> "Stakeholder" = anyone (manager, peer, direct report, cross-functional partner). Before each rehearsal, the agent setup asks who the stakeholder is to the user.
+Relationship options: Manager, Direct report, Peer, Cofounder, Investor, Client, Other.
+
+Voice: two Jordan agents (female default, male), same prompt. Choice saved as `preferred_voice` in the user's Supabase metadata. Env vars `ELEVENLABS_AGENT_FEMALE_ID` and `ELEVENLABS_AGENT_MALE_ID` (server-only).
 
 ## Pricing
 

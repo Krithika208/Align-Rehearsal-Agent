@@ -1757,3 +1757,32 @@ footer a:hover { text-decoration: underline; }
 .perk-claimed {
   margin: 1.25rem 0;
 }
+
+/* ── VOICE CHOICE ── */
+.voice-choice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.voice-choice-label {
+  margin-right: 0.35rem;
+}
+.voice-choice-btn {
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  padding: 0.3rem 0.9rem;
+  border-radius: 100px;
+  font: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.voice-choice-active {
+  border-color: var(--teal);
+  background: var(--teal-glow);
+  color: var(--navy);
+  font-weight: 600;
+}
