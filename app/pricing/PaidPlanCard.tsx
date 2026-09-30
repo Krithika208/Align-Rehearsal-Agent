@@ -36,11 +36,12 @@ export default function PaidPlanCard() {
           <span className="pricing-period">{plan.period}</span>
         </div>
         <p className="pricing-note">{plan.note}</p>
+        <p className="pricing-scarcity">Limited spots left</p>
         <SubscribeButton label="Subscribe" billingInterval={interval} />
 
         <ul className="pricing-features">
           <li>Unlimited rehearsals with Jordan</li>
-          <li>All six launch scenarios, plus your own</li>
+          <li>All five themes, plus your own</li>
           <li>A coaching debrief after every conversation</li>
         </ul>
       </div>

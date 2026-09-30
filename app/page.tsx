@@ -91,6 +91,22 @@ export default async function Home() {
             How it works
           </a>
         </div>
+        <a href="#how" className="scroll-cue">
+          Scroll to see how it works
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </a>
       </section>
 
       {/* HOW IT WORKS */}
@@ -106,7 +122,7 @@ export default async function Home() {
             <div className="step-num">01</div>
             <h3>Choose a scenario</h3>
             <p>
-              Pick from six common high-stakes conversations — or describe
+              Pick from five tough workplace conversations — or describe
               your own specific situation. The agent confirms the setup before
               you begin.
             </p>
@@ -129,6 +145,18 @@ export default async function Home() {
               opening line for the real thing.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* I'M STUCK CALLOUT */}
+      <section className="stuck-section">
+        <div className="stuck-card">
+          <h2>Stuck mid-conversation? Just say so.</h2>
+          <p>
+            When you don&apos;t know what to say next, tell Jordan you&apos;re
+            stuck and get real-time coaching without breaking the rehearsal.
+            Then pick up where you left off.
+          </p>
         </div>
       </section>
 

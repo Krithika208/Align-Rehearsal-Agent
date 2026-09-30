@@ -1806,3 +1806,74 @@ footer a:hover { text-decoration: underline; }
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+/* ── HOMEPAGE: scroll cue under the hero ── */
+.scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.scroll-cue:hover {
+  color: var(--teal);
+}
+.scroll-cue svg {
+  color: var(--teal);
+  animation: scroll-cue-bob 1.8s ease-in-out infinite;
+}
+@keyframes scroll-cue-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue svg { animation: none; }
+}
+
+/* ── HOMEPAGE: "I'm stuck" callout ── */
+.stuck-section {
+  padding: 0 2rem 6rem;
+}
+.stuck-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2.75rem 3rem;
+  border-radius: 20px;
+  background: var(--cream-warm);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--teal);
+}
+.stuck-card h2 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin-bottom: 1rem;
+}
+.stuck-card p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 600px;
+}
+@media (max-width: 640px) {
+  .stuck-section { padding: 0 1.25rem 4rem; }
+  .stuck-card { padding: 2rem 1.5rem; }
+}
+
+/* ── PRICING: scarcity nudge on the Pro card ── */
+.pricing-scarcity {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--amber);
+}
+@media (max-width: 768px) {
+  .hero { padding-bottom: 6.5rem; }
+}

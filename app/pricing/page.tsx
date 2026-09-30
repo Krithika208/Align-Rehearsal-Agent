@@ -78,7 +78,7 @@ export default async function PricingPage({
 
               <ul className="pricing-features">
                 <li>5 lifetime rehearsals with Jordan</li>
-                <li>All six launch scenarios, plus your own</li>
+                <li>All five themes, plus your own</li>
                 <li>A coaching debrief after every conversation</li>
               </ul>
             </div>
