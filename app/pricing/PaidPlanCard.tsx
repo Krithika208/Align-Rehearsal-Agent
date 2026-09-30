@@ -36,7 +36,6 @@ export default function PaidPlanCard() {
           <span className="pricing-period">{plan.period}</span>
         </div>
         <p className="pricing-note">{plan.note}</p>
-        <p className="pricing-scarcity">Limited spots left</p>
         <SubscribeButton label="Subscribe" billingInterval={interval} />
 
         <ul className="pricing-features">
@@ -46,9 +45,10 @@ export default function PaidPlanCard() {
         </ul>
       </div>
       <p className="pricing-spots">
-        First 100 founding members: 15-min call with Krithika, unlocked
-        automatically.
+        First 100 founding members: 1:1 coaching conversation with leadership
+        coach and Align Founder, Krithika Sridhar
       </p>
+      <p className="pricing-scarcity">Limited spots left</p>
     </div>
   );
 }
