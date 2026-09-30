@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createHmac } from "crypto"; // TEMPORARY DEBUG
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -40,44 +39,6 @@ export async function POST(request: Request) {
   if (!signature) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
-
-  // TEMPORARY DEBUG — start. Strip once signature verification works.
-  {
-    const secret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
-    const t = signature.match(/t=(\d+)/)?.[1] ?? "";
-    const v1s = [...signature.matchAll(/v1=([0-9a-f]+)/g)].map((m) => m[1]);
-    // Recompute what Stripe's check computes, to tell a wrong secret apart
-    // from a changed body.
-    const expected = createHmac("sha256", secret)
-      .update(`${t}.`)
-      .update(bodyBuffer)
-      .digest("hex");
-    const trimmed = secret.trim();
-    const expectedIfTrimmed = createHmac("sha256", trimmed)
-      .update(`${t}.`)
-      .update(bodyBuffer)
-      .digest("hex");
-    console.log("[stripe-webhook DEBUG]", {
-      secretPrefix: secret.slice(0, 12),
-      secretLength: secret.length,
-      secretHasWhitespace: secret !== trimmed,
-      signatureHeader: signature.slice(0, 40),
-      v1Count: v1s.length,
-      contentType: request.headers.get("content-type"),
-      contentEncoding: request.headers.get("content-encoding"),
-      contentLengthHeader: request.headers.get("content-length"),
-      rawByteLength: rawBody.byteLength,
-      bufferByteLength: bodyBuffer.length,
-      bufferIsBuffer: Buffer.isBuffer(bodyBuffer),
-      bufferMatchesRaw: bodyBuffer.length === rawBody.byteLength,
-      bodyFirst100: bodyBuffer.toString("utf8", 0, 100),
-      expectedV1Prefix: expected.slice(0, 12),
-      headerV1Prefixes: v1s.map((v) => v.slice(0, 12)),
-      computedMatchesHeader: v1s.includes(expected),
-      computedMatchesIfSecretTrimmed: v1s.includes(expectedIfTrimmed),
-    });
-  }
-  // TEMPORARY DEBUG — end.
 
   let event: Stripe.Event;
   try {
