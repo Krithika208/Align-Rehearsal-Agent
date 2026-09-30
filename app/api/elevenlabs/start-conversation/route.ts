@@ -9,6 +9,25 @@ import { isPaymentIssue } from "@/lib/subscription";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  // TEMPORARY DEBUG — start. Strip once rehearsals start on the preview.
+  console.error("[start-conversation] env check:", {
+    apiKeyPresent: !!process.env.ELEVENLABS_API_KEY,
+    apiKeyLength: process.env.ELEVENLABS_API_KEY?.length ?? 0,
+    maleIdPresent: !!process.env.ELEVENLABS_AGENT_MALE_ID,
+    maleIdValue: process.env.ELEVENLABS_AGENT_MALE_ID?.substring(0, 20) ?? "MISSING",
+    femaleIdPresent: !!process.env.ELEVENLABS_AGENT_FEMALE_ID,
+    femaleIdValue: process.env.ELEVENLABS_AGENT_FEMALE_ID?.substring(0, 20) ?? "MISSING",
+    legacyAgentIdPresent: !!process.env.ELEVENLABS_AGENT_ID,
+    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV,
+    // Names only (no values), JSON-quoted so stray spaces in a name show up.
+    elevenLabsVarNames: Object.keys(process.env)
+      .filter((k) => k.toUpperCase().includes("ELEVEN"))
+      .map((k) => JSON.stringify(k)),
+    gitBranch: process.env.VERCEL_GIT_COMMIT_REF,
+    gitCommit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7),
+  });
+  // TEMPORARY DEBUG — end.
   const supabase = await createClient();
   const {
     data: { user },
