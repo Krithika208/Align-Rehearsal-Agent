@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
+import { SCENARIOS } from "./app/scenarios";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -135,63 +136,17 @@ export default async function Home() {
       <section className="scenarios-section" id="scenarios">
         <div className="scenarios-inner">
           <div className="section-label">What you can practise</div>
-          <h2>Six scenarios, or one of your own</h2>
+          <h2>Five themes, or one of your own</h2>
           <div className="scenario-grid">
-            <div className="scenario-card">
-              <div className="scenario-icon">💬</div>
-              <div>
-                <h4>Deliver tough feedback</h4>
-                <p>
-                  With someone who is likely to push back — a peer, direct
-                  report, manager, or co-founder
-                </p>
+            {SCENARIOS.map((s) => (
+              <div key={s.slug} className="scenario-card">
+                <div className="scenario-icon">{s.icon}</div>
+                <div>
+                  <h4>{s.title}</h4>
+                  <p>{s.subhead}</p>
+                </div>
               </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">💰</div>
-              <div>
-                <h4>Negotiate</h4>
-                <p>
-                  When you&apos;re looking for more than they seem willing to
-                  give
-                </p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">🛡️</div>
-              <div>
-                <h4>Push back on a difficult stakeholder</h4>
-                <p>Holding your line when they hold the power</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">👋</div>
-              <div>
-                <h4>End a working relationship</h4>
-                <p>Letting someone go or parting ways</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">📢</div>
-              <div>
-                <h4>Deliver bad news</h4>
-                <p>Saying what they may not want to hear</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">🚪</div>
-              <div>
-                <h4>Resign with grace</h4>
-                <p>When they&apos;re not ready to let you go</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">✏️</div>
-              <div>
-                <h4>Custom</h4>
-                <p>Whatever&apos;s keeping you up at night</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

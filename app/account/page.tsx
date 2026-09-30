@@ -109,7 +109,7 @@ export default async function AccountPage({
           {subscription ? (
             <>
               <div className="section-label">Your subscription</div>
-              <h1 className="account-heading">Align</h1>
+              <h1 className="account-heading">Pro</h1>
 
               <dl className="account-details">
                 {plan && (

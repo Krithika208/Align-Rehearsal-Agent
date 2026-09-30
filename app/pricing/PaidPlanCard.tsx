@@ -17,7 +17,7 @@ export default function PaidPlanCard() {
   return (
     <div className="pricing-plan">
       <div className="pricing-card">
-        <div className="pricing-badge">Align</div>
+        <div className="pricing-badge">Pro</div>
         <div className="pricing-toggle" role="group" aria-label="Billing interval">
           {(["monthly", "annual"] as const).map((value) => (
             <button
