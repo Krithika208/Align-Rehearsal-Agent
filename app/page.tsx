@@ -49,7 +49,7 @@ export default async function Home() {
             {user ? "Your rehearsals" : "Sign in"}
           </Link>
           <a href="https://livealign.co" className="nav-link">
-            About
+            Coaching
           </a>
         </div>
       </nav>

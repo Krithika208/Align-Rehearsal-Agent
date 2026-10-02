@@ -92,6 +92,7 @@ export default async function AccountPage({
     billing = await fetchBillingDates(subscription.stripe_subscription_id);
   }
   const cancelling = status !== "canceled" && billing.cancelAt !== null;
+  const ended = status === "canceled" || status === "incomplete_expired";
 
   return (
     <>
@@ -109,7 +110,7 @@ export default async function AccountPage({
             Your rehearsals
           </Link>
           <a href="https://livealign.co" className="nav-link">
-            About
+            Coaching
           </a>
         </div>
       </nav>
@@ -167,6 +168,14 @@ export default async function AccountPage({
 
               {foundingPerk && (
                 <FoundingPerkCard perk={foundingPerk} variant="account" />
+              )}
+
+              {ended && (
+                <div className="account-action">
+                  <Link href="/pricing" className="btn-primary">
+                    Subscribe again
+                  </Link>
+                </div>
               )}
 
               <ManageBillingButton />

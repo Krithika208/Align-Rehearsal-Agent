@@ -9,6 +9,9 @@ const LOOKUP_KEY_BY_INTERVAL = {
 
 type BillingInterval = keyof typeof LOOKUP_KEY_BY_INTERVAL;
 
+// Stripe statuses for a subscription that has fully ended.
+const ENDED_STATUSES = ["canceled", "incomplete_expired"];
+
 async function priceIdForLookupKey(lookupKey: string): Promise<string> {
   const prices = await stripe.prices.list({
     lookup_keys: [lookupKey],
@@ -43,18 +46,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Already subscribed? Send them to manage it rather than double-charging.
+    // Block checkout only while a subscription is still running: active,
+    // cancelling at period end (still "active" in Stripe) or payment overdue.
+    // A fully ended plan goes through normal checkout again.
     const { data: existing } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select("status, stripe_customer_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existing) {
+    if (existing && !ENDED_STATUSES.includes(existing.status)) {
       return NextResponse.json(
         {
           error: "You already have a subscription. Manage it from your account.",
-          manage: "/app",
+          manage: "/account",
         },
         { status: 409 }
       );
@@ -64,20 +69,23 @@ export async function POST(request: Request) {
       LOOKUP_KEY_BY_INTERVAL[billingInterval]
     );
 
-    // Create or reuse the Stripe Customer for this user.
-    let customerId: string;
-    const customers = await stripe.customers.list({
-      email: user.email,
-      limit: 1,
-    });
-    if (customers.data[0]) {
-      customerId = customers.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({
+    // Reuse the Stripe Customer: a returning customer's saved ID first, so
+    // their billing history stays in one place, then a match on email.
+    let customerId: string | null = existing?.stripe_customer_id || null;
+    if (!customerId) {
+      const customers = await stripe.customers.list({
         email: user.email,
-        metadata: { user_id: user.id },
+        limit: 1,
       });
-      customerId = customer.id;
+      if (customers.data[0]) {
+        customerId = customers.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: { user_id: user.id },
+        });
+        customerId = customer.id;
+      }
     }
 
     const origin =

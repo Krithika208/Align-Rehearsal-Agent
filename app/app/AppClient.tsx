@@ -432,7 +432,7 @@ function PickerScreen({
             Account
           </a>
           <a href="https://livealign.co" className="app-nav-link">
-            About
+            Coaching
           </a>
           <form action={logoutAction}>
             <button type="submit" className="app-logout">

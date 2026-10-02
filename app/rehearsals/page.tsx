@@ -70,7 +70,7 @@ export default async function RehearsalsPage() {
             Back to rehearse
           </a>
           <a href="https://livealign.co" className="app-nav-link">
-            About
+            Coaching
           </a>
         </div>
       </header>
