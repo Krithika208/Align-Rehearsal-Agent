@@ -42,7 +42,7 @@ export default async function LegalPage({ slug }: { slug: string }) {
             {user ? "Account" : "Sign in"}
           </Link>
           <a href="https://livealign.co" className="nav-link">
-            About
+            Coaching
           </a>
         </div>
       </nav>

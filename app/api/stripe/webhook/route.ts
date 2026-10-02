@@ -80,6 +80,8 @@ export async function POST(request: Request) {
             ? session.customer
             : session.customer?.id;
 
+        // One row per user. A returning customer's ended subscription is
+        // replaced by the new one, so /account and the app see them as Pro.
         const { error: insertError } = await supabase
           .from("subscriptions")
           .upsert(

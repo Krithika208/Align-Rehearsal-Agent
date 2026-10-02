@@ -32,7 +32,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - **Free:** $0, 5 rehearsals lifetime, no card
 - **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
 - **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
-- **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values.
+- **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values. When the plan has fully ended, `/account` shows a "Subscribe again" button to `/pricing`.
+- **Resubscribing:** checkout is blocked only while a subscription is still running (any status except `canceled` / `incomplete_expired`); the block message links to `/account`. A returning customer goes through normal checkout, reusing their saved Stripe customer. The webhook's `checkout.session.completed` upsert (one row per user) replaces the ended subscription with the new one. Their founding spot, claim and welcome email are untouched: no second spot, no reset, no second email.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Privacy
@@ -101,7 +102,8 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 ## What's done
 
 - Launch v1 is on `main` (squash of `pricing-v2`, 2 Oct 2026): free + paid tiers, founding perk and welcome email, encryption at rest, outcome capture, cookie consent, branded Resend auth emails, GA4.
-- Branch `post-launch-fixes` (not yet on `main`): founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
+- `post-launch-fixes` merged to `main`: founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
+- Branch `resubscribe-fix` (not yet on `main`): cancelled customers can subscribe again; header link "About" renamed "Coaching" (still to https://livealign.co).
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
 ## Branches not on main

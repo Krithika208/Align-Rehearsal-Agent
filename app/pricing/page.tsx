@@ -40,7 +40,7 @@ export default async function PricingPage({
             {user ? "Your rehearsals" : "Sign in"}
           </Link>
           <a href="https://livealign.co" className="nav-link">
-            About
+            Coaching
           </a>
         </div>
       </nav>
