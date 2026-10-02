@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
+import AnalyticsLoader from "@/components/AnalyticsLoader";
 
 export const metadata: Metadata = {
   title: "Align — Rehearse Any Workplace Conversation",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body>
         {children}
         <CookieBanner />
+        <AnalyticsLoader />
       </body>
     </html>
   );

@@ -70,7 +70,7 @@ We do not sell your personal data. We do not use your rehearsal transcripts to t
 
 **Essential cookies** keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
 
-**Analytics cookies** help us understand how Align is used so we can improve it. We will shortly add **Google Analytics 4** (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns. Google processes this data on our behalf. See https://policies.google.com/privacy for details.
+**Analytics cookies** help us understand how Align is used so we can improve it. We use **Google Analytics 4** (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns. Google processes this data on our behalf. See https://policies.google.com/privacy for details.
 
 Analytics only runs if you agree to it. When you first visit, a banner asks you to choose:
 
@@ -97,7 +97,7 @@ To provide the service, we share certain data with the following third-party pro
 
 **Resend, Inc.** (United States) — sends account emails, such as sign-up confirmation and password reset. Receives your email address and the content of those emails. See https://resend.com/legal/privacy-policy
 
-**Google LLC** (United States) — provides Google Workspace for our email. If you contact us, your message is processed by Google. Google will also provide Google Analytics once we add it, only for visitors who accept analytics cookies (see section 5). See https://policies.google.com/privacy
+**Google LLC** (United States) — provides Google Workspace for our email. If you contact us, your message is processed by Google. Google also provides Google Analytics, only for visitors who accept analytics cookies (see section 5). See https://policies.google.com/privacy
 
 Each of these processors operates under their own data protection terms. We have data processing agreements in place where required.
 
