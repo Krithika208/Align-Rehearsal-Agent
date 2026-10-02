@@ -1782,6 +1782,46 @@ footer a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 
+.mic-choice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.mic-choice-label {
+  margin-right: 0.35rem;
+}
+.mic-choice-select {
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  padding: 0.3rem 0.6rem;
+  border-radius: 100px;
+  font: inherit;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.mic-choice-link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-left: 0.25rem;
+  font: inherit;
+  color: var(--teal);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mic-choice-link:disabled {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
 /* ── OUTCOME CARD (Rehearsal complete) ── */
 .outcome-card {
   margin: 1.5rem 0 0;

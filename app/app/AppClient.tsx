@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
+import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
+import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
   RELATIONSHIPS,
@@ -103,6 +105,16 @@ export default function AppClient({
     wrappingUpRef.current = false;
     turnIdRef.current = 0;
     try {
+      // Sort out the mic before the server counts this rehearsal.
+      let micId: string | null;
+      try {
+        micId = await prepareMic();
+      } catch {
+        throw new Error(
+          "Align needs your microphone. Allow it in your browser, then try again."
+        );
+      }
+
       const res = await fetch("/api/elevenlabs/start-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,37 +150,49 @@ export default function AppClient({
         };
       if (free_sessions_used !== null) setFreeSessionsUsed(free_sessions_used);
 
-      const conversation = await Conversation.startSession({
-        signedUrl: signed_url,
-        dynamicVariables: {
-          scenario: scenario.label,
-          relationship,
-          situation: situation.trim(),
-        },
-        onModeChange: ({ mode }) => {
-          setMode(mode === "speaking" ? "speaking" : "listening");
-        },
-        onMessage: ({ message, source }) => {
-          if (!message) return;
-          if (source === "user") {
-            appendTurn("user", message);
-          } else if (source === "ai") {
-            appendTurn("agent", message);
-          }
-        },
-        onDisconnect: () => {
-          void finalizeCall();
-        },
-        onError: (msg) => {
-          setError(msg);
-        },
-      });
+      const conversation = await withMic(micId, () =>
+        Conversation.startSession({
+          signedUrl: signed_url,
+          inputDeviceId: micId ?? undefined,
+          dynamicVariables: {
+            scenario: scenario.label,
+            relationship,
+            situation: situation.trim(),
+          },
+          onModeChange: ({ mode }) => {
+            setMode(mode === "speaking" ? "speaking" : "listening");
+          },
+          onMessage: ({ message, source }) => {
+            if (!message) return;
+            if (source === "user") {
+              appendTurn("user", message);
+            } else if (source === "ai") {
+              appendTurn("agent", message);
+            }
+          },
+          onDisconnect: () => {
+            void finalizeCall();
+          },
+          onError: (msg) => {
+            setError(msg);
+          },
+        })
+      );
 
       activeCallRef.current = { conversation, dbId: conversation_db_id };
       startSessionTimer();
       setStep("calling");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const micGone =
+        err instanceof Error &&
+        (err.name === "OverconstrainedError" || err.name === "NotFoundError");
+      setError(
+        micGone
+          ? "That microphone isn't available. We've switched back to your default, so please try again."
+          : err instanceof Error
+            ? err.message
+            : "Something went wrong"
+      );
     } finally {
       setStarting(false);
     }
@@ -554,6 +578,8 @@ function SetupScreen({
         </div>
 
         {error && <div className="auth-error">{error}</div>}
+
+        <MicPicker />
 
         <div className="voice-choice" role="radiogroup" aria-label="Jordan's voice">
           <span className="voice-choice-label">Jordan&apos;s voice:</span>

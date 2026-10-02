@@ -54,11 +54,12 @@ Ship fast, iterate fast. Simplest thing that works. No over-engineering. No prem
 - **Framework:** Next.js 14 (App Router) + TypeScript
 - **Styling:** Tailwind configured; most styles live in `app/globals.css`
 - **Database + auth:** Supabase (email/password auth, RLS on all tables)
-- **Payments:** Stripe. Prices are looked up by lookup key (`align_monthly`, `align_annual`), never hard-coded price IDs. Test or live mode follows whichever `STRIPE_SECRET_KEY` is set; `.env.local.example` assumes test keys.
+- **Payments:** Stripe. Prices are looked up by lookup key (`align_monthly`, `align_annual`), never hard-coded price IDs. Test or live mode follows whichever `STRIPE_SECRET_KEY` is set; `.env.local.example` assumes test keys. Production runs in live mode (since 2 Oct 2026); Preview uses the Stripe sandbox.
 - **Email:** Resend (SMTP for Supabase auth emails, API for the founding welcome)
 - **Voice agent:** ElevenLabs Conversational AI, two Jordan agents
+- **Microphone:** `lib/microphone.ts` + `components/MicPicker.tsx` (menu on the setup screen). The app picks one mic per rehearsal and pins every mic request to it: the user's saved choice (localStorage `align_mic`), else the browser default, never an iPhone/Continuity mic unless chosen. Without this, the SDK's "ideal" audio hints let Chrome pick a nearby iPhone.
 - **Analytics:** GA4 (`components/AnalyticsLoader.tsx`), loads only after cookie consent
-- **Hosting:** Vercel, deployed from GitHub. Domain `livealign.co`; Vercel URL `align-rehearsal-agent.vercel.app`.
+- **Hosting:** Vercel, deployed from GitHub. Domain `livealign.co` (the app is at `rehearse.livealign.co`); Vercel URL `align-rehearsal-agent.vercel.app`.
 
 ## Environment variables
 
@@ -87,7 +88,9 @@ Migrations live in `db/migrations/` and are run by hand in the Supabase SQL edit
 7. `2026_09_30_drop_plaintext_columns.sql` (only once the encrypting code is live, which it now is on `main`)
 8. `2026_10_02_founding_perk_booking.sql` (adds `booking_ref`, email lookup function, resets all click-based claims; run once)
 
-The repo does not record which have been run. Check in Supabase before running anything.
+Run on production on 2 Oct 2026: `founding_perk_booking`, `wipe_test_conversations`, `drop_plaintext_columns` (the plaintext columns no longer exist). Earlier ones are not recorded; check in Supabase before running anything.
+
+The `founding_perks` table was emptied on production on 2 Oct 2026, so all 100 founding spots are open.
 
 Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`.
 
@@ -103,7 +106,9 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 
 - Launch v1 is on `main` (squash of `pricing-v2`, 2 Oct 2026): free + paid tiers, founding perk and welcome email, encryption at rest, outcome capture, cookie consent, branded Resend auth emails, GA4.
 - `post-launch-fixes` merged to `main`: founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
-- Branch `resubscribe-fix` (not yet on `main`): cancelled customers can subscribe again; header link "About" renamed "Coaching" (still to https://livealign.co).
+- `resubscribe-fix` merged to `main`: cancelled customers can subscribe again; header link "About" renamed "Coaching" (still to https://livealign.co).
+- Done on production, 2 Oct 2026: Stripe live mode on Production (Preview stays on the sandbox); Cal.com webhook set up, pointing at `rehearse.livealign.co/api/cal/webhook`.
+- Branch `mic-picker` (not yet on `main`): fixes the iPhone (Continuity) mic switching on; adds a microphone menu to the setup screen.
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
 ## Branches not on main
@@ -114,5 +119,4 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 ## What's next / half-built
 
 - Delayed outcome follow-up: columns exist in `rehearsal_outcomes`, nothing sends it (TODO in `2026_09_30_encryption_and_outcomes.sql`).
-- Cal.com webhook setup (Settings → Developer → Webhooks, `BOOKING_CREATED` only, secret in `CAL_WEBHOOK_SECRET`).
-- Manual checks: ElevenLabs retention off on both agents; Stripe live keys and live webhook in Vercel Production; Supabase email templates pasted from `emails/`.
+- Manual checks: ElevenLabs retention off on both agents; Supabase email templates pasted from `emails/`.
