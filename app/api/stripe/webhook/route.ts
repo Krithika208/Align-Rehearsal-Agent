@@ -125,11 +125,12 @@ export async function POST(request: Request) {
             const { data: authUser } = await supabase.auth.admin.getUserById(userId);
             const email = authUser.user?.email;
             if (!email) throw new Error("user has no email address");
-            const meta = authUser.user?.user_metadata ?? {};
+            // user_metadata is auth.users.raw_user_meta_data; full_name is what
+            // the signup form collects.
             await scheduleFoundingWelcomeEmail({
               userId,
               email,
-              displayName: meta.full_name ?? meta.name ?? meta.display_name,
+              displayName: authUser.user?.user_metadata?.full_name,
             });
           } catch (emailError) {
             console.error(
