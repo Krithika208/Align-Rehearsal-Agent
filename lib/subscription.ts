@@ -95,7 +95,7 @@ export async function getFoundingPerk(): Promise<FoundingPerk | null> {
 
   const { data } = await supabase
     .from("founding_perks")
-    .select("claimed, claimed_at")
+    .select("claimed, claimed_at, booking_ref")
     .eq("user_id", user.id)
     .maybeSingle();
 

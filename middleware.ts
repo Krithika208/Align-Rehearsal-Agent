@@ -7,8 +7,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // api/stripe/webhook is excluded so nothing runs before the handler reads
-    // the raw body Stripe signed. It has no user session to refresh anyway.
-    "/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // The Stripe and Cal.com webhooks are excluded so nothing runs before the
+    // handler reads the signed raw body. They have no user session anyway.
+    "/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|api/cal/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -17,14 +17,16 @@ const PLAN_BY_INTERVAL: Record<string, { label: string; price: string }> = {
   annual: { label: "Annual", price: "$100/year" },
 };
 
+// Friendly labels for Stripe statuses. Never show a raw Stripe value.
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
-  trialing: "Trialing",
-  past_due: "Past due",
-  canceled: "Canceled",
-  incomplete: "Incomplete",
+  trialing: "Free trial",
+  past_due: "Payment overdue",
+  canceled: "Cancelled",
+  incomplete: "Payment incomplete",
   incomplete_expired: "Expired",
   unpaid: "Unpaid",
+  paused: "Paused",
 };
 
 function formatDate(value: string | number | Date): string {
@@ -35,20 +37,36 @@ function formatDate(value: string | number | Date): string {
   });
 }
 
-// Pull the next billing date from Stripe. In the 2026-05-27.dahlia API version
+type BillingDates = {
+  // Unix seconds. periodEnd is the next billing date, or the last day of
+  // access when cancelAt is set.
+  periodEnd: number | null;
+  // Set when the user has cancelled in the portal but the plan hasn't ended.
+  cancelAt: number | null;
+};
+
+// Read billing dates live from Stripe. In the 2026-05-27.dahlia API version
 // current_period_end lives on the subscription item, not the top-level object.
-async function fetchNextBillingDate(
-  subscriptionId: string
-): Promise<number | null> {
+// A portal cancellation sets cancel_at_period_end (or cancel_at); reversing it
+// clears both, so the page goes back to the normal view on its own.
+async function fetchBillingDates(subscriptionId: string): Promise<BillingDates> {
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const itemPeriodEnd = subscription.items.data[0]?.current_period_end;
-    if (typeof itemPeriodEnd === "number") return itemPeriodEnd;
     const legacy = (subscription as unknown as { current_period_end?: number })
       .current_period_end;
-    return typeof legacy === "number" ? legacy : null;
+    const periodEnd =
+      typeof itemPeriodEnd === "number"
+        ? itemPeriodEnd
+        : typeof legacy === "number"
+          ? legacy
+          : null;
+    const cancelAt = subscription.cancel_at_period_end
+      ? periodEnd
+      : subscription.cancel_at ?? null;
+    return { periodEnd, cancelAt };
   } catch {
-    return null;
+    return { periodEnd: null, cancelAt: null };
   }
 }
 
@@ -69,12 +87,11 @@ export default async function AccountPage({
     await Promise.all([getSubscriptionInfo(), getFoundingPerk()]);
   const plan = billingInterval ? PLAN_BY_INTERVAL[billingInterval] : null;
 
-  let nextBillingDate: number | null = null;
+  let billing: BillingDates = { periodEnd: null, cancelAt: null };
   if (subscription) {
-    nextBillingDate = await fetchNextBillingDate(
-      subscription.stripe_subscription_id
-    );
+    billing = await fetchBillingDates(subscription.stripe_subscription_id);
   }
+  const cancelling = status !== "canceled" && billing.cancelAt !== null;
 
   return (
     <>
@@ -126,13 +143,25 @@ export default async function AccountPage({
                 )}
                 <div className="account-row">
                   <dt>Status</dt>
-                  <dd>{STATUS_LABELS[status] ?? status}</dd>
+                  <dd>
+                    {cancelling
+                      ? `Cancels on ${formatDate(billing.cancelAt! * 1000)}`
+                      : STATUS_LABELS[status] ?? "Inactive"}
+                  </dd>
                 </div>
-                {nextBillingDate && (
+                {cancelling ? (
                   <div className="account-row">
-                    <dt>Next billing date</dt>
-                    <dd>{formatDate(nextBillingDate * 1000)}</dd>
+                    <dt>Access until</dt>
+                    <dd>{formatDate(billing.cancelAt! * 1000)}</dd>
                   </div>
+                ) : (
+                  status !== "canceled" &&
+                  billing.periodEnd && (
+                    <div className="account-row">
+                      <dt>Next billing date</dt>
+                      <dd>{formatDate(billing.periodEnd * 1000)}</dd>
+                    </div>
+                  )
                 )}
               </dl>
 

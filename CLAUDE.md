@@ -31,7 +31,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 
 - **Free:** $0, 5 rehearsals lifetime, no card
 - **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
-- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed.
+- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
+- **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Privacy
@@ -67,6 +68,7 @@ Names only. Set in `.env.local` (gitignored) and Vercel (Production + Preview + 
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - `ENCRYPTION_MASTER_KEY` (never change or lose it: old transcripts become unreadable)
 - `RESEND_API_KEY`
+- `CAL_WEBHOOK_SECRET` (signing secret from the Cal.com webhook)
 - `FOUNDING_EMAIL_DELAY_MINUTES` (optional, testing only)
 
 `.env.local.example` lists `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, but no code uses it. It is missing `RESEND_API_KEY` and `FOUNDING_EMAIL_DELAY_MINUTES`.
@@ -82,6 +84,7 @@ Migrations live in `db/migrations/` and are run by hand in the Supabase SQL edit
 5. `2026_09_30_encryption_and_outcomes.sql`
 6. `2026_09_30_wipe_test_conversations.sql` (one-off, destructive)
 7. `2026_09_30_drop_plaintext_columns.sql` (only once the encrypting code is live, which it now is on `main`)
+8. `2026_10_02_founding_perk_booking.sql` (adds `booking_ref`, email lookup function, resets all click-based claims; run once)
 
 The repo does not record which have been run. Check in Supabase before running anything.
 
@@ -98,6 +101,7 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 ## What's done
 
 - Launch v1 is on `main` (squash of `pricing-v2`, 2 Oct 2026): free + paid tiers, founding perk and welcome email, encryption at rest, outcome capture, cookie consent, branded Resend auth emails, GA4.
+- Branch `post-launch-fixes` (not yet on `main`): founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
 ## Branches not on main
@@ -108,4 +112,5 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 ## What's next / half-built
 
 - Delayed outcome follow-up: columns exist in `rehearsal_outcomes`, nothing sends it (TODO in `2026_09_30_encryption_and_outcomes.sql`).
+- Cal.com webhook setup (Settings → Developer → Webhooks, `BOOKING_CREATED` only, secret in `CAL_WEBHOOK_SECRET`).
 - Manual checks: ElevenLabs retention off on both agents; Stripe live keys and live webhook in Vercel Production; Supabase email templates pasted from `emails/`.
