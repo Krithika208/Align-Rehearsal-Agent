@@ -1,7 +1,7 @@
 # Privacy Policy
 
 **Effective date:** 13 May 2026
-**Last updated:** 30 September 2026
+**Last updated:** 2 October 2026
 
 ## 1. Who we are
 
@@ -36,12 +36,20 @@ When you use Align, we collect the following:
 - The short situation description you write before each rehearsal
 - The full transcript of each voice rehearsal (text only — audio is processed in real time and not stored)
 - The date, time, and duration of each rehearsal
+- Your answers to the short questions after a rehearsal (whether you've had the real conversation yet, and how it went)
+- Your preferred voice for Jordan
+
+**Subscription and usage data**
+- Your plan (Free or Pro), billing interval, and subscription status
+- How many rehearsals you've used (to apply the free limit and fair-use limit)
+- Payment card details are entered directly with Stripe. We never see or store your full card number.
 
 **Technical data**
 - IP address (for security and abuse prevention)
 - Browser type, device type, and operating system
 - Essential session cookies (required for authentication)
-- Analytics cookies and identifiers (see section 5)
+- Your cookie choice, saved in your browser
+- Analytics cookies and identifiers, only if you accept them (see section 5)
 
 We do not currently use advertising trackers or marketing cookies. If we add any in future, we will update this policy and request your consent where required.
 
@@ -58,29 +66,38 @@ We use your personal data to:
 
 We do not sell your personal data. We do not use your rehearsal transcripts to train AI models.
 
-## 5. Analytics and cookies
+## 5. Cookies and analytics
 
-We use product analytics to understand how Align is used and to improve the experience. We currently use **Google Analytics 4** (provided by Google LLC, United States).
+**Essential cookies** keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
 
-Google Analytics collects information about your visit, including pages viewed, approximate location, device characteristics, and aggregated usage patterns. This data is processed by Google as our data processor. See https://policies.google.com/privacy for details.
+**Analytics cookies** help us understand how Align is used so we can improve it. We will shortly add **Google Analytics 4** (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns. Google processes this data on our behalf. See https://policies.google.com/privacy for details.
 
-Where required by law (including in the EU, UK, and certain other jurisdictions), we will request your consent for non-essential analytics cookies via a cookie banner before they are set. You may withdraw consent at any time through the cookie preferences link in our footer.
+Analytics only runs if you agree to it. When you first visit, a banner asks you to choose:
 
-Essential session cookies (used to keep you logged in) do not require consent and are always active when you use the service.
+- **Accept all:** essential cookies plus analytics
+- **Essential only:** essential cookies only. No analytics runs.
+
+We remember your choice in your browser for 12 months. You can change it at any time with the "Cookie preferences" link at the bottom of every page.
+
+We do not use advertising or marketing cookies.
 
 ## 6. Service providers
 
 To provide the service, we share certain data with the following third-party providers, who act as data processors on our behalf:
 
-**Anthropic, PBC** (United States) — provides the AI conversation engine. Rehearsal transcripts and session context are sent to Anthropic's Claude API to generate coaching responses. Anthropic does not use this data to train their models. See https://www.anthropic.com/privacy
+**ElevenLabs, Inc.** (United States) — runs the live voice conversation with Jordan: speech recognition and voice generation. Your words and Jordan's replies pass through ElevenLabs during the call. We have turned off data retention with ElevenLabs, so they do not keep your recordings or transcripts after the call ends. See https://elevenlabs.io/privacy
 
-**ElevenLabs, Inc.** (United States) — provides voice generation and speech recognition for the rehearsal experience. Audio is transmitted in real time. See https://elevenlabs.io/privacy
+**Anthropic, PBC** (United States) — provides the AI model (Claude) that powers Jordan, via ElevenLabs. Your conversation and the rehearsal setup are sent to Claude during the call to generate Jordan's responses. Anthropic does not use this data to train their models. See https://www.anthropic.com/privacy
 
-**Supabase, Inc.** (United States) — provides our database and authentication infrastructure. Stores your account data and rehearsal records. See https://supabase.com/privacy
+**Supabase, Inc.** (United States) — provides our database and sign-in system. Stores your account data and your encrypted rehearsal records. See https://supabase.com/privacy
 
 **Vercel, Inc.** (United States) — hosts our website and receives standard server access logs. See https://vercel.com/legal/privacy-policy
 
-**Google LLC** (United States) — provides Google Workspace for our internal email and Google Analytics for product analytics. If you contact us, your message is processed by Google. See https://policies.google.com/privacy
+**Stripe, Inc.** (United States) — processes subscription payments. Stripe receives your email, billing details, and payment card. See https://stripe.com/privacy
+
+**Resend, Inc.** (United States) — sends account emails, such as sign-up confirmation and password reset. Receives your email address and the content of those emails. See https://resend.com/legal/privacy-policy
+
+**Google LLC** (United States) — provides Google Workspace for our email. If you contact us, your message is processed by Google. Google will also provide Google Analytics once we add it, only for visitors who accept analytics cookies (see section 5). See https://policies.google.com/privacy
 
 Each of these processors operates under their own data protection terms. We have data processing agreements in place where required.
 
@@ -92,12 +109,12 @@ For users in the EU/UK, transfers to the United States and other third countries
 
 ## 8. Data retention
 
-- **Account data:** kept while your account is active. Deleted within 30 days of account closure, except where we are legally required to retain certain records for longer.
-- **Rehearsal transcripts:** kept while your account is active. You can request deletion of specific rehearsals at any time by emailing us.
+- **Account data:** kept while your account is active. Deleted within 30 days of account closure, except where we are legally required to keep certain records for longer (for example, payment records for tax purposes).
+- **Rehearsal data** (transcripts, situation descriptions, and your answers after each rehearsal): kept for as long as your account is open, so you can look back on your rehearsals. Deleted when you close your account, or sooner if you ask us to delete specific rehearsals.
 - **Server logs:** kept for up to 90 days for security purposes.
-- **Analytics data:** kept for up to 14 months in aggregate form.
+- **Analytics data:** kept for up to 14 months, only for visitors who accepted analytics cookies.
 
-You can request deletion of your account and all associated data at any time (see section 10).
+To close your account or delete rehearsals, email us (see section 10).
 
 ## 9. Legal basis for processing
 
@@ -121,7 +138,12 @@ Regardless of where you are located, you have the right to:
 - **Withdraw consent** at any time, where we rely on consent
 - **Lodge a complaint** with your local data protection authority
 
-To exercise any of these rights, email us at hello@livealign.co. We will respond within 30 days.
+To exercise any of these rights, email us at hello@livealign.co from the email address on your account. For example:
+
+- **Get a copy of your data**, including your rehearsal transcripts, in a portable format
+- **Delete specific rehearsals**, or close your account and delete everything
+
+We will respond within 30 days.
 
 In Singapore, you may also contact the Personal Data Protection Commission (PDPC) at https://www.pdpc.gov.sg. Users in the EU may contact their national data protection authority; users in the UK may contact the Information Commissioner's Office (ICO) at https://ico.org.uk; users in California have the right to contact the California Attorney General.
 
@@ -135,6 +157,8 @@ We protect your data using industry-standard security measures, including:
 - Regular security updates
 
 Your rehearsal transcripts are encrypted at rest. They are not accessible to Align team members through our database systems, and are not readable in the event of a data breach affecting our storage layer. Only you can view your own transcripts through your account.
+
+The situation descriptions you write before each rehearsal are protected in the same way. Each one is locked to your account, so it can't be opened from anyone else's.
 
 No system is perfectly secure. If we become aware of a personal data breach that is likely to result in significant harm or significant impact on your rights, we will notify the relevant authorities and you in line with our legal obligations.
 

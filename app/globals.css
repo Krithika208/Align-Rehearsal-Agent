@@ -1877,3 +1877,103 @@ footer a:hover { text-decoration: underline; }
 @media (max-width: 768px) {
   .hero { padding-bottom: 6.5rem; }
 }
+
+/* ── COOKIE CONSENT ── */
+.site-footer-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.site-footer-btn:hover {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cookie-banner {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 300;
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  background: var(--navy);
+  color: #ffffff;
+  box-shadow: 0 12px 40px rgba(8, 29, 51, 0.25);
+  font-family: 'DM Sans', sans-serif;
+}
+.cookie-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-light);
+}
+.cookie-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+.cookie-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cookie-btn:hover {
+  border-color: #ffffff;
+}
+.cookie-btn-primary {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+.cookie-btn-primary:hover {
+  background: var(--teal-light);
+  border-color: var(--teal-light);
+}
+.cookie-link {
+  font-size: 0.85rem;
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: stretch;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+  .cookie-actions {
+    flex-wrap: wrap;
+  }
+  .cookie-btn {
+    flex: 1;
+  }
+  .cookie-link {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.legal-article h2 {
+  scroll-margin-top: 6rem;
+}

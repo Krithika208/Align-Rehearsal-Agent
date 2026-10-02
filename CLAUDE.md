@@ -38,6 +38,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 
 - Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
 - ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
+- Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner.
+- Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. The app sends no emails of its own.
 - `rehearsal_outcomes` captures "did you have the real conversation?" on the complete screen. Delayed follow-up is future work.
 
 ## Build philosophy

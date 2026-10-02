@@ -6,6 +6,17 @@ import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "./SiteFooter";
 
+// "5. Cookies and analytics" → "cookies-and-analytics", so sections can be
+// linked to (e.g. /privacy#cookies-and-analytics from the cookie banner).
+function headingId(children: React.ReactNode): string {
+  const text = Array.isArray(children) ? children.join("") : String(children ?? "");
+  return text
+    .toLowerCase()
+    .replace(/^\d+\.\s*/, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default async function LegalPage({ slug }: { slug: string }) {
   const filePath = path.join(process.cwd(), "content", "legal", `${slug}.md`);
   const markdown = await fs.readFile(filePath, "utf8");
@@ -37,7 +48,14 @@ export default async function LegalPage({ slug }: { slug: string }) {
       </nav>
       <main className="legal-shell">
         <article className="legal-article">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
+            }}
+          >
+            {markdown}
+          </ReactMarkdown>
         </article>
       </main>
       <SiteFooter />
