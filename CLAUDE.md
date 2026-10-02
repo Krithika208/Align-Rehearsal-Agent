@@ -31,7 +31,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 
 - **Free:** $0, 5 rehearsals lifetime, no card
 - **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
-- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed.
+- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
+- **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Privacy
@@ -50,52 +51,44 @@ Ship fast, iterate fast. Simplest thing that works. No over-engineering. No prem
 ## Tech stack
 
 - **Framework:** Next.js 14 (App Router) + TypeScript
-- **Styling:** Tailwind (configured but homepage currently uses migrated inline CSS from the original static page in `app/globals.css`)
-- **Database:** Supabase — *not yet added*
-- **Auth:** TBD — *not yet added*
-- **Payments:** Stripe — *not yet added*
-- **Voice agent:** ElevenLabs Conversational AI (existing agent, embedded via the official `<elevenlabs-convai>` widget)
-- **Hosting:** Vercel, deployed from GitHub. Live at `align-rehearsal-agent.vercel.app`. Long-term domain: `livealign.co`.
-
-## Repo layout
-
-```
-app/
-  layout.tsx           # root layout, fonts, metadata
-  page.tsx             # marketing homepage (Client Component, interactive CTAs)
-  globals.css          # Tailwind directives + migrated styles + auth-page styles
-  login/page.tsx       # email/password login (server action)
-  signup/page.tsx      # email/password signup (server action; sends confirmation email)
-  auth/callback/route.ts # handles email-confirmation redirect → exchanges code for session
-  app/page.tsx         # logged-in landing (protected by middleware) — currently shows email + logout
-  api/                 # placeholder — future API routes (Stripe webhooks, etc.)
-components/
-  ElevenLabsWidget.tsx # mounts the EL custom element + halo + startRehearsal handler
-lib/
-  supabase/
-    client.ts          # browser client (createBrowserClient)
-    server.ts          # server client w/ cookie adapters (Server Components, Actions, Routes)
-    middleware.ts      # session-refresh helper used by root middleware.ts
-middleware.ts          # protects /app/* — redirects unauthenticated users to /login
-types/
-  elevenlabs.d.ts      # TS declaration for the <elevenlabs-convai> custom element
-```
+- **Styling:** Tailwind configured; most styles live in `app/globals.css`
+- **Database + auth:** Supabase (email/password auth, RLS on all tables)
+- **Payments:** Stripe. Prices are looked up by lookup key (`align_monthly`, `align_annual`), never hard-coded price IDs. Test or live mode follows whichever `STRIPE_SECRET_KEY` is set; `.env.local.example` assumes test keys.
+- **Email:** Resend (SMTP for Supabase auth emails, API for the founding welcome)
+- **Voice agent:** ElevenLabs Conversational AI, two Jordan agents
+- **Analytics:** GA4 (`components/AnalyticsLoader.tsx`), loads only after cookie consent
+- **Hosting:** Vercel, deployed from GitHub. Domain `livealign.co`; Vercel URL `align-rehearsal-agent.vercel.app`.
 
 ## Environment variables
 
-Required in both `.env.local` (gitignored) and Vercel project settings (Production + Preview + Development):
+Names only. Set in `.env.local` (gitignored) and Vercel (Production + Preview + Development):
 
-- `NEXT_PUBLIC_SUPABASE_URL` — Supabase Project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase publishable key (formerly "anon key"; format is now `sb_publishable_…` — `@supabase/ssr` accepts either format)
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_FEMALE_ID`, `ELEVENLABS_AGENT_MALE_ID`
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `ENCRYPTION_MASTER_KEY` (never change or lose it: old transcripts become unreadable)
+- `RESEND_API_KEY`
+- `CAL_WEBHOOK_SECRET` (signing secret from the Cal.com webhook)
+- `FOUNDING_EMAIL_DELAY_MINUTES` (optional, testing only)
+
+`.env.local.example` lists `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, but no code uses it. It is missing `RESEND_API_KEY` and `FOUNDING_EMAIL_DELAY_MINUTES`.
 
 ## Database
 
-Schema managed in Supabase (no migrations checked into the repo yet). Tables:
+Migrations live in `db/migrations/` and are run by hand in the Supabase SQL editor. Order:
 
-- `profiles` — one row per user, FK to `auth.users`. Auto-created via trigger on signup.
-- `conversations` — one row per rehearsal session (transcript stored as jsonb).
+1. `2026_05_12_conversations_schema.sql`
+2. `2026_06_14_subscriptions_schema.sql`
+3. `2026_06_14_subscriptions_billing_interval.sql`
+4. `2026_09_27_pricing_v2.sql` (usage counters, founding perks, single tier)
+5. `2026_09_30_encryption_and_outcomes.sql`
+6. `2026_09_30_wipe_test_conversations.sql` (one-off, destructive)
+7. `2026_09_30_drop_plaintext_columns.sql` (only once the encrypting code is live, which it now is on `main`)
+8. `2026_10_02_founding_perk_booking.sql` (adds `booking_ref`, email lookup function, resets all click-based claims; run once)
 
-Row-Level Security is enabled on both tables; users can only read/write their own rows.
+The repo does not record which have been run. Check in Supabase before running anything.
+
+Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`.
 
 ## How to work with Krithika
 
@@ -107,15 +100,17 @@ Row-Level Security is enabled on both tables; users can only read/write their ow
 
 ## What's done
 
-- Migrated the original static `index.html` into a Next.js 14 App Router project. Marketing page lives at `/`. Visual parity preserved. ElevenLabs widget continues to work.
-- Vercel framework preset set to **Next.js** (build/install/output settings auto-detected from `package.json`).
-- Supabase auth wired up: signup, email confirmation, login, logout. `/app` is gated by middleware. `profiles` and `conversations` tables exist in Supabase with RLS.
+- Launch v1 is on `main` (squash of `pricing-v2`, 2 Oct 2026): free + paid tiers, founding perk and welcome email, encryption at rest, outcome capture, cookie consent, branded Resend auth emails, GA4.
+- Branch `post-launch-fixes` (not yet on `main`): founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
+- `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
-## What's next (not started)
+## Branches not on main
 
-- Stripe integration (Founding 1,000 + standard tier) + usage caps (5 rehearsals/month for founding)
-- Scenario picker UI at `/app` (six launch scenarios)
-- Rehearsal flow: scenario setup → ElevenLabs session → write to `conversations` table → debrief view
-- ElevenLabs agent prompt engineering for the six launch scenarios
-- Profile editing UI
-- Password reset / OAuth providers / custom email templates
+- `logo-swap`, `new-logo` (May 2026): early logo work, 30 commits behind. Probably stale.
+- `setup-onboarding` (May 2026): welcome block on the rehearsal setup screen. Never merged.
+
+## What's next / half-built
+
+- Delayed outcome follow-up: columns exist in `rehearsal_outcomes`, nothing sends it (TODO in `2026_09_30_encryption_and_outcomes.sql`).
+- Cal.com webhook setup (Settings → Developer → Webhooks, `BOOKING_CREATED` only, secret in `CAL_WEBHOOK_SECRET`).
+- Manual checks: ElevenLabs retention off on both agents; Stripe live keys and live webhook in Vercel Production; Supabase email templates pasted from `emails/`.

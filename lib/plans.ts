@@ -6,4 +6,5 @@ export const PAID_MONTHLY_FAIR_USE_CAP = 30;
 export type FoundingPerk = {
   claimed: boolean;
   claimed_at: string | null;
+  booking_ref: string;
 };
