@@ -39,7 +39,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
 - ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
 - Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner.
-- Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. The app sends no emails of its own.
+- Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. Branded templates live in `emails/` and are pasted into Supabase by hand.
+- The only app-sent email: Krithika's plain-text founding welcome (`lib/emails/founding-welcome.ts`), scheduled via Resend 3 days after a new founding perk is allocated in the Stripe webhook. `FOUNDING_EMAIL_DELAY_MINUTES` overrides the delay for testing.
 - `rehearsal_outcomes` captures "did you have the real conversation?" on the complete screen. Delayed follow-up is future work.
 
 ## Build philosophy

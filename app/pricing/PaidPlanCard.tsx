@@ -43,12 +43,15 @@ export default function PaidPlanCard() {
           <li>All five themes, plus your own</li>
           <li>A coaching debrief after every conversation</li>
         </ul>
+
+        <div className="pricing-founding">
+          <div className="pricing-badge">First 100 members</div>
+          <p className="pricing-founding-text">
+            A free 1:1 coaching session with Krithika, Align&apos;s founder.
+          </p>
+          <p className="pricing-founding-note">Limited spots left.</p>
+        </div>
       </div>
-      <p className="pricing-spots">
-        First 100 founding members: 1:1 coaching conversation with leadership
-        coach and Align Founder, Krithika Sridhar
-      </p>
-      <p className="pricing-scarcity">Limited spots left</p>
     </div>
   );
 }

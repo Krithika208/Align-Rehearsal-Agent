@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { scheduleFoundingWelcomeEmail } from "@/lib/emails/founding-welcome";
 
 // Stripe webhooks need the byte-exact raw body for signature verification.
 // Force the Node.js runtime and opt out of static optimization / body parsing.
@@ -100,13 +101,42 @@ export async function POST(request: Request) {
 
         // First 100 paid users get a founding perk. The RPC returns the user's
         // existing slot if they already have one, so a retried webhook never
-        // allocates twice or burns a second slot.
-        const { error: perkError } = await supabase.rpc(
+        // allocates twice or burns a second slot. It reports allocated: true in
+        // both cases, so check first whether the user already had a slot.
+        const { data: existingPerk } = await supabase
+          .from("founding_perks")
+          .select("user_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const { data: perk, error: perkError } = await supabase.rpc(
           "allocate_founding_perk",
           { p_user_id: userId }
         );
         if (perkError) {
           throw new Error(`Failed to allocate founding perk: ${perkError.message}`);
+        }
+
+        // Newly allocated slot only (never position 101+, never an existing
+        // member, never a webhook retry): schedule Krithika's welcome note.
+        // Best-effort: a failure is logged and the webhook still succeeds.
+        if (!existingPerk && (perk as { allocated?: boolean } | null)?.allocated) {
+          try {
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            const email = authUser.user?.email;
+            if (!email) throw new Error("user has no email address");
+            const meta = authUser.user?.user_metadata ?? {};
+            await scheduleFoundingWelcomeEmail({
+              userId,
+              email,
+              displayName: meta.full_name ?? meta.name ?? meta.display_name,
+            });
+          } catch (emailError) {
+            console.error(
+              `[stripe-webhook] founding welcome email not scheduled for ${userId}:`,
+              emailError instanceof Error ? emailError.message : emailError
+            );
+          }
         }
         break;
       }
