@@ -72,6 +72,12 @@ body > nav {
 }
 .nav-link:hover { color: var(--navy); }
 
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
 /* ── HERO ── */
 .hero {
   min-height: 100vh;
@@ -1302,4 +1308,679 @@ footer a:hover { text-decoration: underline; }
   .transcript-scroll { max-height: 220px; }
   .legal-shell { padding: 6rem 1rem 3rem; }
   .legal-article { padding: 2rem 1.5rem; border-radius: 12px; }
+  .pricing-shell { padding: 7rem 1.25rem 3rem; }
+  .pricing-card { padding: 2.25rem 1.5rem; }
+  .pricing-grid { grid-template-columns: 1fr; }
+}
+
+/* ── PRICING ── */
+.pricing-shell {
+  min-height: calc(100vh - 60px);
+  background: var(--cream);
+  padding: 9rem 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.pricing-shell .section-label {
+  margin-bottom: 1rem;
+}
+.pricing-heading {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--navy);
+  margin: 0 0 1.25rem;
+  animation: none;
+}
+.pricing-heading em {
+  font-style: italic;
+  color: var(--teal);
+}
+.pricing-sub {
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  font-weight: 300;
+  max-width: 520px;
+  margin: 0 0 3rem;
+}
+.pricing-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 16px 48px rgba(13, 46, 78, 0.06);
+  text-align: center;
+}
+.pricing-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  background: var(--teal-glow);
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+.pricing-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.pricing-price {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--navy);
+  letter-spacing: -0.03em;
+}
+.pricing-period {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.pricing-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.pricing-spots {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.01em;
+}
+.pricing-cta {
+  margin: 1.75rem 0 0;
+}
+.pricing-cta .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+.pricing-cta .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.pricing-error {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #b42318;
+}
+.pricing-error-link {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pricing-features {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 1.75rem 0 0;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pricing-features li {
+  position: relative;
+  padding-left: 1.6rem;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+.pricing-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--teal);
+  font-weight: 600;
+}
+.pricing-finecopy {
+  margin: 2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.pricing-banner {
+  max-width: 440px;
+  margin: 0 0 2rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: var(--teal-glow);
+  border: 1px solid rgba(30, 123, 140, 0.2);
+  color: var(--navy);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ── ACCOUNT ── */
+.account-banner {
+  margin: 0 0 1.75rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: 12px;
+  background: rgba(196, 148, 58, 0.1);
+  border: 1px solid rgba(196, 148, 58, 0.3);
+  color: var(--navy);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.account-shell {
+  min-height: calc(100vh - 60px);
+  background: var(--cream);
+  padding: 9rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+}
+.account-column {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+}
+.account-signout {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+.account-signout-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.account-signout-btn:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.account-signout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+.account-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 16px 48px rgba(13, 46, 78, 0.06);
+}
+.account-card .section-label {
+  margin-bottom: 0.85rem;
+}
+.account-heading {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  margin: 0 0 1.75rem;
+  animation: none;
+}
+.account-details {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.account-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.account-row dt {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.account-row dd {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--navy);
+  text-align: right;
+}
+.account-note {
+  margin: 0 0 1.75rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.account-note strong {
+  font-weight: 500;
+  color: var(--navy);
+}
+.account-action {
+  margin: 0 0 0.5rem;
+}
+.account-action .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+.account-action .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.account-error {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #b42318;
+}
+.account-meta {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.account-email {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.account-footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.account-footer-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.account-footer-nav a:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .account-shell { padding: 7rem 1.25rem 3rem; }
+  .account-card { padding: 2.25rem 1.5rem; }
+}
+
+/* ── PRICING v2: free + paid side by side ── */
+.pricing-grid {
+  width: 100%;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.pricing-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.pricing-grid .pricing-card {
+  max-width: none;
+}
+.pricing-cta a.btn-primary {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+}
+.pricing-banner a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pricing-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  margin: 0 0 1.5rem;
+  border-radius: 100px;
+  background: var(--cream-warm);
+  border: 1px solid var(--border-subtle);
+}
+.pricing-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.pricing-toggle-active {
+  background: #ffffff;
+  color: var(--navy);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(13, 46, 78, 0.08);
+}
+
+/* ── FREE-TIER INDICATOR ── */
+.free-indicator {
+  display: inline-block;
+  margin: 0 0 1.25rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  background: var(--teal-glow);
+  color: var(--navy);
+  font-size: 0.82rem;
+}
+.free-indicator-link {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── FAIR-USE MODAL ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 29, 51, 0.45);
+}
+.modal-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.75rem;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(13, 46, 78, 0.18);
+}
+.modal-text {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ── FOUNDING PERK ── */
+.perk-card {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--cream-warm);
+  border: 1px solid rgba(196, 148, 58, 0.35);
+  text-align: left;
+}
+.perk-text {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--navy);
+}
+.perk-btn {
+  display: inline-flex;
+}
+.perk-claimed {
+  margin: 1.25rem 0;
+}
+
+/* ── VOICE CHOICE ── */
+.voice-choice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.voice-choice-label {
+  margin-right: 0.35rem;
+}
+.voice-choice-btn {
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  padding: 0.3rem 0.9rem;
+  border-radius: 100px;
+  font: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.voice-choice-active {
+  border-color: var(--teal);
+  background: var(--teal-glow);
+  color: var(--navy);
+  font-weight: 600;
+}
+
+/* ── OUTCOME CARD (Rehearsal complete) ── */
+.outcome-card {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+}
+.outcome-q {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--navy);
+}
+.outcome-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* ── HOMEPAGE: scroll cue under the hero ── */
+.scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.scroll-cue:hover {
+  color: var(--teal);
+}
+.scroll-cue svg {
+  color: var(--teal);
+  animation: scroll-cue-bob 1.8s ease-in-out infinite;
+}
+@keyframes scroll-cue-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue svg { animation: none; }
+}
+
+/* ── HOMEPAGE: "I'm stuck" callout ── */
+.stuck-section {
+  padding: 0 2rem 6rem;
+}
+.stuck-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2.75rem 3rem;
+  border-radius: 20px;
+  background: var(--cream-warm);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--teal);
+}
+.stuck-card h2 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin-bottom: 1rem;
+}
+.stuck-card p {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 600px;
+}
+@media (max-width: 640px) {
+  .stuck-section { padding: 0 1.25rem 4rem; }
+  .stuck-card { padding: 2rem 1.5rem; }
+}
+@media (max-width: 768px) {
+  .hero { padding-bottom: 6.5rem; }
+}
+
+/* ── COOKIE CONSENT ── */
+.site-footer-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.site-footer-btn:hover {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cookie-banner {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 300;
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  background: var(--navy);
+  color: #ffffff;
+  box-shadow: 0 12px 40px rgba(8, 29, 51, 0.25);
+  font-family: 'DM Sans', sans-serif;
+}
+.cookie-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-light);
+}
+.cookie-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+.cookie-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cookie-btn:hover {
+  border-color: #ffffff;
+}
+.cookie-btn-primary {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+.cookie-btn-primary:hover {
+  background: var(--teal-light);
+  border-color: var(--teal-light);
+}
+.cookie-link {
+  font-size: 0.85rem;
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: stretch;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+  .cookie-actions {
+    flex-wrap: wrap;
+  }
+  .cookie-btn {
+    flex: 1;
+  }
+  .cookie-link {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.legal-article h2 {
+  scroll-margin-top: 6rem;
+}
+
+/* ── PRICING: founding perk inside the Pro card ── */
+.pricing-founding {
+  margin: 1.5rem 0 0;
+  text-align: left;
+}
+.pricing-founding .pricing-badge {
+  margin-bottom: 0.75rem;
+}
+.pricing-founding-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.pricing-founding-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
 }

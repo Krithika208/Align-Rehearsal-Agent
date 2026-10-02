@@ -12,24 +12,36 @@ B2C subscription. Built by Krithika (solo founder, ICF PCC-certified coach).
 
 Help people move from feeling **trapped at work** to feeling **empowered**, by letting them rehearse the conversations they've been avoiding.
 
-## Six launch scenarios
+## Scenarios
 
-**Workplace**
-1. Negotiate a raise or promotion
-2. Push back on a difficult stakeholder
-3. Deliver difficult feedback to a stakeholder
+Five themes plus Custom (defined in `app/app/scenarios.ts`). Jordan receives the UPPERCASE label as `{{scenario}}`; the ElevenLabs prompt matches these exact strings.
 
-**Founder**
-4. Pitch investors with shaky metrics
-5. Difficult conversation with a co-founder
-6. Let go of an early employee
+1. Negotiate (`NEGOTIATE`)
+2. Push back on a stakeholder (`PUSH BACK ON A STAKEHOLDER`)
+3. Deliver tough feedback (`DELIVER TOUGH FEEDBACK`)
+4. Receive difficult news (`RECEIVE DIFFICULT NEWS`)
+5. Deliver difficult news (`DELIVER DIFFICULT NEWS`)
+6. Custom (`CUSTOM`)
 
-> "Stakeholder" = anyone (manager, peer, direct report, cross-functional partner). Before each rehearsal, the agent setup asks who the stakeholder is to the user.
+Relationship options: Manager, Direct report, Peer, Cofounder, Investor, Client, Other.
+
+Voice: two Jordan agents (female default, male), same prompt. Choice saved as `preferred_voice` in the user's Supabase metadata. Env vars `ELEVENLABS_AGENT_FEMALE_ID` and `ELEVENLABS_AGENT_MALE_ID` (server-only).
 
 ## Pricing
 
-- **Founding 1,000:** £3.99/month — 5 rehearsals/month cap, grandfathered for 12 months
-- **Standard:** £8.99/month after the founding cohort fills
+- **Free:** $0, 5 rehearsals lifetime, no card
+- **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
+- **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed.
+- **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
+
+## Privacy
+
+- Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
+- ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
+- Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner.
+- Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. Branded templates live in `emails/` and are pasted into Supabase by hand.
+- The only app-sent email: Krithika's plain-text founding welcome (`lib/emails/founding-welcome.ts`), scheduled via Resend 3 days after a new founding perk is allocated in the Stripe webhook. `FOUNDING_EMAIL_DELAY_MINUTES` overrides the delay for testing.
+- `rehearsal_outcomes` captures "did you have the real conversation?" on the complete screen. Delayed follow-up is future work.
 
 ## Build philosophy
 

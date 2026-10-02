@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import AppClient from "./AppClient";
+import { getFoundingPerk, requireAppAccess } from "@/lib/subscription";
 
 export const metadata = {
   title: "Your rehearsals — Align",
@@ -27,9 +28,20 @@ export default async function AppHome() {
     (user.user_metadata?.name as string | undefined) ??
     null;
 
+  const initialVoice =
+    user.user_metadata?.preferred_voice === "male" ? "male" : "female";
+
+  const [{ freeSessionsUsed }, foundingPerk] = await Promise.all([
+    requireAppAccess(),
+    getFoundingPerk(),
+  ]);
+
   return (
     <>
       <AppClient
+        freeSessionsUsed={freeSessionsUsed}
+        foundingPerk={foundingPerk}
+        initialVoice={initialVoice}
         userEmail={user.email ?? ""}
         userName={fullName}
         logoutAction={logout}

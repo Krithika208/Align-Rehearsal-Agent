@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
+import { SCENARIOS } from "./app/scenarios";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -10,20 +11,47 @@ export default async function Home() {
 
   const ctaHref = user ? "/app" : "/signup";
 
+  // Hide the Pricing link from anyone who already has an active subscription.
+  let hasActiveSubscription = false;
+  if (user) {
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    hasActiveSubscription =
+      subscription?.status === "active" || subscription?.status === "trialing";
+  }
+
   return (
     <>
       <nav>
-        <a href="https://livealign.co" className="logo">
+        <Link href="/" className="logo" aria-label="Align home">
           <img
             src="/brand/align-lockup-navy.svg"
             alt="Align"
             width={115}
             height={32}
           />
-        </a>
-        <Link href="/login" className="nav-link">
-          Sign in
         </Link>
+        <div className="nav-links">
+          {!hasActiveSubscription && (
+            <Link href="/pricing" className="nav-link">
+              Pricing
+            </Link>
+          )}
+          {user && (
+            <Link href="/account" className="nav-link">
+              Account
+            </Link>
+          )}
+          <Link href={user ? "/app" : "/login"} className="nav-link">
+            {user ? "Your rehearsals" : "Sign in"}
+          </Link>
+          <a href="https://livealign.co" className="nav-link">
+            About
+          </a>
+        </div>
       </nav>
 
       {/* HERO */}
@@ -63,6 +91,22 @@ export default async function Home() {
             How it works
           </a>
         </div>
+        <a href="#how" className="scroll-cue">
+          Scroll to see how it works
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </a>
       </section>
 
       {/* HOW IT WORKS */}
@@ -78,7 +122,7 @@ export default async function Home() {
             <div className="step-num">01</div>
             <h3>Choose a scenario</h3>
             <p>
-              Pick from six common high-stakes conversations — or describe
+              Pick from five tough workplace conversations — or describe
               your own specific situation. The agent confirms the setup before
               you begin.
             </p>
@@ -104,67 +148,33 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* I'M STUCK CALLOUT */}
+      <section className="stuck-section">
+        <div className="stuck-card">
+          <h2>Stuck mid-conversation? Just say so.</h2>
+          <p>
+            When you don&apos;t know what to say next, tell Jordan you&apos;re
+            stuck and get real-time coaching without breaking the rehearsal.
+            Then pick up where you left off.
+          </p>
+        </div>
+      </section>
+
       {/* SCENARIOS */}
       <section className="scenarios-section" id="scenarios">
         <div className="scenarios-inner">
           <div className="section-label">What you can practise</div>
-          <h2>Six scenarios, or one of your own</h2>
+          <h2>Five themes, or one of your own</h2>
           <div className="scenario-grid">
-            <div className="scenario-card">
-              <div className="scenario-icon">💬</div>
-              <div>
-                <h4>Deliver tough feedback</h4>
-                <p>
-                  With someone who is likely to push back — a peer, direct
-                  report, manager, or co-founder
-                </p>
+            {SCENARIOS.map((s) => (
+              <div key={s.slug} className="scenario-card">
+                <div className="scenario-icon">{s.icon}</div>
+                <div>
+                  <h4>{s.title}</h4>
+                  <p>{s.subhead}</p>
+                </div>
               </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">💰</div>
-              <div>
-                <h4>Negotiate</h4>
-                <p>
-                  When you&apos;re looking for more than they seem willing to
-                  give
-                </p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">🛡️</div>
-              <div>
-                <h4>Push back on a difficult stakeholder</h4>
-                <p>Holding your line when they hold the power</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">👋</div>
-              <div>
-                <h4>End a working relationship</h4>
-                <p>Letting someone go or parting ways</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">📢</div>
-              <div>
-                <h4>Deliver bad news</h4>
-                <p>Saying what they may not want to hear</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">🚪</div>
-              <div>
-                <h4>Resign with grace</h4>
-                <p>When they&apos;re not ready to let you go</p>
-              </div>
-            </div>
-            <div className="scenario-card">
-              <div className="scenario-icon">✏️</div>
-              <div>
-                <h4>Custom</h4>
-                <p>Whatever&apos;s keeping you up at night</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

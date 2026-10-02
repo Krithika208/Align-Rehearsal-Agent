@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CookiePreferencesLink from "./CookiePreferencesLink";
 
 export default function SiteFooter() {
   return (
@@ -23,6 +24,10 @@ export default function SiteFooter() {
           ·
         </span>
         <Link href="/disclaimer">Disclaimer</Link>
+        <span className="site-footer-dot" aria-hidden>
+          ·
+        </span>
+        <CookiePreferencesLink />
       </nav>
     </footer>
   );

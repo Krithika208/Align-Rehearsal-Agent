@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
-import { SCENARIOS } from "../../app/scenarios";
+import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
+import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
 export const metadata = {
   title: "Rehearsal — Align",
@@ -61,7 +62,7 @@ export default async function RehearsalDetailPage({
   const { data: row } = await supabase
     .from("conversations")
     .select(
-      "id, scenario_slug, relationship, situation, started_at, duration_seconds, transcript"
+      "id, scenario_slug, relationship, started_at, duration_seconds, encrypted_content, encryption_iv, encrypted_key, encrypted_situation, situation_iv, situation_key"
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -72,9 +73,35 @@ export default async function RehearsalDetailPage({
   const scenario = row.scenario_slug
     ? SCENARIO_BY_SLUG[row.scenario_slug]
     : null;
-  const title = scenario?.title ?? row.scenario_slug ?? "Rehearsal";
+  const title = scenarioTitle(row.scenario_slug);
   const icon = scenario?.icon ?? "💬";
-  const turns = normalizeTranscript(row.transcript);
+  // Decrypted only here, for the owner. Throws (error page) if the key is
+  // missing or a blob doesn't belong to this user.
+  const situation =
+    row.encrypted_situation && row.situation_iv && row.situation_key
+      ? decryptText(
+          {
+            ciphertext: fromBytea(row.encrypted_situation),
+            iv: fromBytea(row.situation_iv),
+            wrappedKey: fromBytea(row.situation_key),
+          },
+          user.id,
+          "situation"
+        )
+      : null;
+  const turns =
+    row.encrypted_content && row.encryption_iv && row.encrypted_key
+      ? normalizeTranscript(
+          decryptTranscript(
+            {
+              ciphertext: fromBytea(row.encrypted_content),
+              iv: fromBytea(row.encryption_iv),
+              wrappedKey: fromBytea(row.encrypted_key),
+            },
+            user.id
+          )
+        )
+      : [];
 
   return (
     <>
@@ -83,9 +110,14 @@ export default async function RehearsalDetailPage({
         <a href="/rehearsals" className="app-back">
           <span aria-hidden>←</span> My rehearsals
         </a>
-        <a href="/app" className="auth-logo">
-          align<span>.</span>
-        </a>
+        <div className="app-header-right">
+          <a href="/app" className="auth-logo">
+            align<span>.</span>
+          </a>
+          <a href="https://livealign.co" className="app-nav-link">
+            About
+          </a>
+        </div>
       </header>
       <div className="app-inner app-inner-narrow">
         <div className="section-label">Rehearsal</div>
@@ -107,10 +139,10 @@ export default async function RehearsalDetailPage({
           ) : null}
         </div>
 
-        {row.situation && (
+        {situation && (
           <div className="rehearsal-situation">
             <div className="rehearsal-situation-label">The situation</div>
-            <p>{row.situation}</p>
+            <p>{situation}</p>
           </div>
         )}
 
