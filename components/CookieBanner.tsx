@@ -28,8 +28,7 @@ export default function CookieBanner() {
   return (
     <div className="cookie-banner" role="region" aria-label="Cookie consent">
       <p className="cookie-text">
-        We use cookies for essential site functionality and anonymous
-        analytics.
+        We use cookies for essential site functionality and site analytics.
       </p>
       <div className="cookie-actions">
         <button
