@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import SignupForm from "./SignupForm";
 
 export const metadata = {
   title: "Sign up — Align",
@@ -90,61 +91,7 @@ export default async function SignupPage({
           <div className="auth-error">{params.error}</div>
         ) : null}
 
-        <form action={signup} className="auth-form">
-          <label className="auth-label">
-            Full name
-            <input
-              type="text"
-              name="full_name"
-              required
-              autoComplete="name"
-              className="auth-input"
-            />
-          </label>
-          <label className="auth-label">
-            Email
-            <input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="auth-input"
-            />
-          </label>
-          <label className="auth-label">
-            Password
-            <input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="auth-input"
-            />
-            <span className="auth-hint">At least 8 characters.</span>
-          </label>
-          <div className="auth-checkbox-row">
-            <label className="auth-checkbox">
-              <input type="checkbox" name="age_confirmed" value="yes" />
-              I confirm I&apos;m 18 or over.
-            </label>
-            {params.age_required ? (
-              <span className="auth-checkbox-error" role="alert">
-                Align is for adults aged 18 and over. Please confirm your age
-                to continue.
-              </span>
-            ) : null}
-          </div>
-          <button type="submit" className="btn-primary auth-submit">
-            Create account
-          </button>
-          <p className="auth-consent">
-            By signing up, you agree to our{" "}
-            <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>, and acknowledge our{" "}
-            <Link href="/disclaimer">AI Coaching Disclaimer</Link>.
-          </p>
-        </form>
+        <SignupForm action={signup} initialAgeError={!!params.age_required} />
 
         <p className="auth-footer-link">
           Already have an account? <Link href="/login">Log in</Link>

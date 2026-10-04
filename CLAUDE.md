@@ -41,7 +41,7 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 
 - Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
 - ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
-- Age confirmation: `/signup` (the only sign-up route) has an unticked "I confirm I'm 18 or over." box. Without it, the server action stops before calling Supabase (no account, no email) and shows the adults-only message by the box. When ticked, `age_confirmed_at` (ISO timestamp) is saved in the user's metadata. Log-in is unchanged; older accounts have no `age_confirmed_at`.
+- Age confirmation: `/signup` (the only sign-up route) has an unticked "I confirm I'm 18 or over." box. Without it, `app/signup/SignupForm.tsx` blocks the submit in the browser and shows the adults-only message by the box, keeping what was typed. The server action checks again as a backstop (stops before calling Supabase: no account, no email; the page reloads with the message and empty fields, password never pre-filled). When ticked, `age_confirmed_at` (ISO timestamp) is saved in the user's metadata. Log-in is unchanged; older accounts have no `age_confirmed_at`.
 - Setup screen: under the situation box, a muted line says what users share is encrypted and they can change names. No "don't share" warning.
 - Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner.
 - Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. Branded templates live in `emails/` and are pasted into Supabase by hand.
@@ -111,7 +111,7 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 - `post-launch-fixes` merged to `main`: founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
 - `resubscribe-fix` merged to `main`: cancelled customers can subscribe again; header link "About" renamed "Coaching" (still to https://livealign.co).
 - Done on production, 2 Oct 2026: Stripe live mode on Production (Preview stays on the sandbox); Cal.com webhook set up, pointing at `rehearse.livealign.co/api/cal/webhook`.
-- Branch `mic-picker` (not yet on `main`): fixes the iPhone (Continuity) mic switching on; adds a microphone menu to the setup screen.
+- `mic-picker` merged to `main`: fixes the iPhone (Continuity) mic switching on; adds a microphone menu to the setup screen.
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
 - Branch `signup-and-disclosures` (not yet on `main`): age confirmation at sign-up, 20-minute cap on `/pricing`, reassurance line on the setup screen.
