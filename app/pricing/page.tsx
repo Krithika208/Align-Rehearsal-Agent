@@ -77,7 +77,7 @@ export default async function PricingPage({
               </div>
 
               <ul className="pricing-features">
-                <li>5 lifetime rehearsals with Jordan</li>
+                <li>5 lifetime rehearsals with Jordan, up to 20 minutes each</li>
                 <li>All five themes, plus your own</li>
                 <li>A coaching debrief after every conversation</li>
               </ul>
@@ -86,6 +86,10 @@ export default async function PricingPage({
 
           <PaidPlanCard />
         </div>
+
+        <p className="pricing-cap-note">
+          Each rehearsal runs for up to 20 minutes, including your debrief.
+        </p>
 
         <p className="pricing-finecopy">
           Prices in USD. Tax calculated at checkout. Secure payment by Stripe.
