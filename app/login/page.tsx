@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,49 +32,52 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <main className="auth-shell">
-      <div className="auth-card">
-        <Link href="/" className="auth-logo">
-          align<span>.</span>
-        </Link>
-        <h1 className="auth-heading">Welcome back</h1>
-        <p className="auth-sub">Log in to keep rehearsing.</p>
+    <>
+      <main className="auth-shell">
+        <div className="auth-card">
+          <Link href="/" className="auth-logo">
+            align<span>.</span>
+          </Link>
+          <h1 className="auth-heading">Welcome back</h1>
+          <p className="auth-sub">Log in to keep rehearsing.</p>
 
-        {params.error ? (
-          <div className="auth-error">{params.error}</div>
-        ) : null}
+          {params.error ? (
+            <div className="auth-error">{params.error}</div>
+          ) : null}
 
-        <form action={login} className="auth-form">
-          <input type="hidden" name="redirectTo" value={params.redirectTo ?? "/app"} />
-          <label className="auth-label">
-            Email
-            <input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="auth-input"
-            />
-          </label>
-          <label className="auth-label">
-            Password
-            <input
-              type="password"
-              name="password"
-              required
-              autoComplete="current-password"
-              className="auth-input"
-            />
-          </label>
-          <button type="submit" className="btn-primary auth-submit">
-            Log in
-          </button>
-        </form>
+          <form action={login} className="auth-form">
+            <input type="hidden" name="redirectTo" value={params.redirectTo ?? "/app"} />
+            <label className="auth-label">
+              Email
+              <input
+                type="email"
+                name="email"
+                required
+                autoComplete="email"
+                className="auth-input"
+              />
+            </label>
+            <label className="auth-label">
+              Password
+              <input
+                type="password"
+                name="password"
+                required
+                autoComplete="current-password"
+                className="auth-input"
+              />
+            </label>
+            <button type="submit" className="btn-primary auth-submit">
+              Log in
+            </button>
+          </form>
 
-        <p className="auth-footer-link">
-          New here? <Link href="/signup">Create an account</Link>
-        </p>
-      </div>
-    </main>
+          <p className="auth-footer-link">
+            New here? <Link href="/signup">Create an account</Link>
+          </p>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
