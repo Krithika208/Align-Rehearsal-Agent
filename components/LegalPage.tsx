@@ -41,7 +41,7 @@ export default async function LegalPage({ slug }: { slug: string }) {
           <Link href={user ? "/account" : "/login"} className="nav-link">
             {user ? "Account" : "Sign in"}
           </Link>
-          <a href="https://livealign.co" className="nav-link">
+          <a href="https://livealign.co" className="nav-link nav-link-wide">
             Coaching
           </a>
         </div>

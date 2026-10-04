@@ -5,6 +5,7 @@ import { Conversation } from "@elevenlabs/client";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
+import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -65,6 +66,7 @@ export default function AppClient({
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
+  const [soundBlocked, setSoundBlocked] = useState(false);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
@@ -182,6 +184,14 @@ export default function AppClient({
       activeCallRef.current = { conversation, dbId: conversation_db_id };
       startSessionTimer();
       setStep("calling");
+      // iPhone backstop: if sound is still off a moment after connecting,
+      // ask for one tap to turn it on (see lib/audioOutput.ts).
+      setSoundBlocked(false);
+      window.setTimeout(() => {
+        if (activeCallRef.current?.conversation === conversation) {
+          setSoundBlocked(isSoundBlocked(conversation));
+        }
+      }, 1000);
     } catch (err) {
       const micGone =
         err instanceof Error &&
@@ -202,6 +212,7 @@ export default function AppClient({
     const active = activeCallRef.current;
     if (!active) return;
     activeCallRef.current = null;
+    setSoundBlocked(false);
     stopTimerRef.current?.();
     stopTimerRef.current = null;
     const elId = active.conversation.getId?.() ?? null;
@@ -347,6 +358,14 @@ export default function AppClient({
         onTeachingMode={requestTeachingMode}
         onWrapUp={wrapUpRehearsal}
         onEnd={endRehearsal}
+        soundBlocked={soundBlocked}
+        onTurnSoundOn={() => {
+          const active = activeCallRef.current;
+          if (!active) return;
+          void turnSoundOn(active.conversation).then(() =>
+            setSoundBlocked(isSoundBlocked(active.conversation))
+          );
+        }}
       />
     );
   }
@@ -448,14 +467,14 @@ function PickerScreen({
           align<span>.</span>
         </a>
         <div className="app-header-right">
-          <span className="app-user">Hi, {greeting}</span>
+          <span className="app-user app-nav-wide">Hi, {greeting}</span>
           <a href="/rehearsals" className="app-nav-link">
             My rehearsals
           </a>
           <a href="/account" className="app-nav-link">
             Account
           </a>
-          <a href="https://livealign.co" className="app-nav-link">
+          <a href="https://livealign.co" className="app-nav-link app-nav-wide">
             Coaching
           </a>
           <form action={logoutAction}>
@@ -629,6 +648,8 @@ function CallScreen({
   onTeachingMode,
   onWrapUp,
   onEnd,
+  soundBlocked,
+  onTurnSoundOn,
 }: {
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
@@ -637,6 +658,8 @@ function CallScreen({
   onTeachingMode: () => void;
   onWrapUp: () => void;
   onEnd: () => void;
+  soundBlocked: boolean;
+  onTurnSoundOn: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -663,6 +686,15 @@ function CallScreen({
           <span className="call-visual-bar" />
         </div>
         <div className="call-name">Jordan</div>
+        {soundBlocked && (
+          <button
+            type="button"
+            className="btn-primary call-sound-btn"
+            onClick={onTurnSoundOn}
+          >
+            Tap to hear Jordan
+          </button>
+        )}
         <div className="call-status">
           {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
         </div>

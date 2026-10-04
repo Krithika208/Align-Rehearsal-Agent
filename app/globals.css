@@ -78,6 +78,31 @@ body > nav {
   gap: 1.75rem;
 }
 
+/* Phones: keep the header on one line. Coaching is also in the footer
+   (livealign.co), and Account is one tap away in the /app header. */
+@media (max-width: 640px) {
+  body > nav { gap: 0.75rem; }
+  .logo { flex-shrink: 0; }
+  .logo img { height: 26px; }
+  .nav-links { gap: 0.9rem; }
+  .nav-link {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+}
+@media (max-width: 480px) {
+  .nav-link-wide { display: none; }
+}
+/* Smallest phones: show just the mark, cropped from the same lockup. */
+@media (max-width: 350px) {
+  .logo img {
+    width: 26px;
+    object-fit: cover;
+    object-position: left center;
+  }
+}
+
 /* ── HERO ── */
 .hero {
   min-height: 100vh;
@@ -928,6 +953,10 @@ footer a:hover { text-decoration: underline; }
   50%      { transform: scale(1.12); opacity: 0;    }
 }
 
+.call-sound-btn {
+  margin: 0.75rem auto 1rem;
+}
+
 .call-name {
   font-family: 'Fraunces', serif;
   font-weight: 300;
@@ -1113,6 +1142,20 @@ footer a:hover { text-decoration: underline; }
   transition: color 0.2s;
 }
 .app-nav-link:hover { color: var(--navy); }
+
+@media (max-width: 640px) {
+  .app-nav-wide { display: none; }
+  .app-header-right { gap: 0.85rem; }
+  .app-nav-link,
+  .app-logout,
+  .app-back { white-space: nowrap; }
+  .app-nav-link { font-size: 0.8rem; }
+  .app-logout { font-size: 0.76rem; }
+}
+@media (max-width: 360px) {
+  .app-nav-link { font-size: 0.75rem; }
+  .app-logout { font-size: 0.72rem; }
+}
 
 /* my rehearsals — list */
 .rehearsals-list {

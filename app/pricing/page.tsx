@@ -32,14 +32,14 @@ export default async function PricingPage({
         </Link>
         <div className="nav-links">
           {user && (
-            <Link href="/account" className="nav-link">
+            <Link href="/account" className="nav-link nav-link-wide">
               Account
             </Link>
           )}
           <Link href={user ? "/app" : "/login"} className="nav-link">
             {user ? "Your rehearsals" : "Sign in"}
           </Link>
-          <a href="https://livealign.co" className="nav-link">
+          <a href="https://livealign.co" className="nav-link nav-link-wide">
             Coaching
           </a>
         </div>

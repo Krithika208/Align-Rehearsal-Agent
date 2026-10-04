@@ -62,8 +62,9 @@ Ship fast, iterate fast. Simplest thing that works. No over-engineering. No prem
 - **Database + auth:** Supabase (email/password auth, RLS on all tables), region West EU (Ireland), `eu-west-1`
 - **Payments:** Stripe. Prices are looked up by lookup key (`align_monthly`, `align_annual`), never hard-coded price IDs. Test or live mode follows whichever `STRIPE_SECRET_KEY` is set; `.env.local.example` assumes test keys. Production runs in live mode (since 2 Oct 2026); Preview uses the Stripe sandbox.
 - **Email:** Resend (SMTP for Supabase auth emails, API for the founding welcome)
-- **Voice agent:** ElevenLabs Conversational AI, two Jordan agents
+- **Voice agent:** ElevenLabs Conversational AI, two Jordan agents. Browser SDK `@elevenlabs/client` 1.26.0 (was 1.7.0). Keep it at 1.8.1 or later: older versions drop Jordan's opening line on iPhone (Safari and in-app browsers like WhatsApp's), because iOS only lets sound start inside a tap and the player was created after several waits (mic check, server call, connection). Since 1.8.1 the SDK unlocks sound on the Start tap and primes the player ([elevenlabs/packages#777](https://github.com/elevenlabs/packages/issues/777)). That unlock only lasts 30 seconds, so `lib/audioOutput.ts` is a backstop: a second after connecting, if sound is still off, the call screen shows "Tap to hear Jordan". It reads the SDK's private player fields defensively, so recheck it after any SDK upgrade. On iPhone the SDK loads a resampler from cdn.jsdelivr.net; if a Content Security Policy is ever added, allow it. No ElevenLabs agent or prompt change was needed.
 - **Microphone:** `lib/microphone.ts` + `components/MicPicker.tsx` (menu on the setup screen). The app picks one mic per rehearsal and pins every mic request to it: the user's saved choice (localStorage `align_mic`), else the browser default, never an iPhone/Continuity mic unless chosen. Without this, the SDK's "ideal" audio hints let Chrome pick a nearby iPhone.
+- **Mobile layout:** at 640px and below the marketing header (`/`, `/pricing`, `/account`, legal pages) uses smaller uppercase links that never wrap. At 480px and below it hides links marked `nav-link-wide` ("Coaching", which the footer also links as livealign.co, and "Account" on `/` and `/pricing`, which stays in the `/app` header). At 350px and below the logo shows just the mark. The `/app` header hides `app-nav-wide` items (the "Hi, name" greeting and "Coaching") at 640px and below. Checked in a real browser at 320, 375, 390 and 430px, logged out, free and paid: nothing runs off the screen.
 - **Analytics:** GA4 (`components/AnalyticsLoader.tsx`), loads only after cookie consent
 - **Hosting:** Vercel, deployed from GitHub. Domain `livealign.co` (the app is at `rehearse.livealign.co`); Vercel URL `align-rehearsal-agent.vercel.app`.
 
@@ -120,7 +121,8 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 - `signup-and-disclosures` merged to `main`: age confirmation at sign-up, 20-minute cap on `/pricing`, reassurance line on the setup screen.
 - `signup-polish` merged to `main`: sign-up button disables while sending; friendly text for Supabase's email rate-limit message.
 - `cap-copy` merged to `main`: 20-minute cap copy on both `/pricing` cards, below the cards, and on the setup screen; founding perk block centred with gold text.
-- Branch `legal-pages-update` (not yet on `main`): Privacy Policy and Terms of Service replaced on 4 October 2026; "Pro is subject to fair use" added under the `/pricing` cards; site footer added to `/login` and `/signup`.
+- `legal-pages-update` merged to `main`: Privacy Policy and Terms of Service replaced on 4 October 2026; "Pro is subject to fair use" added under the `/pricing` cards; site footer added to `/login` and `/signup`.
+- Branch `mobile-fixes` (not yet on `main`): Jordan's opening line on iPhone (SDK 1.26.0 plus the "Tap to hear Jordan" backstop); headers fit on one line on phones.
 
 ## Branches not on main
 

@@ -109,7 +109,7 @@ export default async function AccountPage({
           <Link href="/app" className="nav-link">
             Your rehearsals
           </Link>
-          <a href="https://livealign.co" className="nav-link">
+          <a href="https://livealign.co" className="nav-link nav-link-wide">
             Coaching
           </a>
         </div>
