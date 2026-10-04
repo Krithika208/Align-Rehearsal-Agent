@@ -13,6 +13,12 @@ async function signup(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
+  const ageConfirmed = formData.get("age_confirmed") === "yes";
+
+  // Checked before anything else: no account and no email without it.
+  if (!ageConfirmed) {
+    redirect("/signup?age_required=1");
+  }
 
   const headersList = await headers();
   const origin = headersList.get("origin") ?? headersList.get("host");
@@ -25,7 +31,10 @@ async function signup(formData: FormData) {
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        age_confirmed_at: new Date().toISOString(),
+      },
       emailRedirectTo,
     },
   });
@@ -40,7 +49,11 @@ async function signup(formData: FormData) {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; check_email?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    check_email?: string;
+    age_required?: string;
+  }>;
 }) {
   const params = await searchParams;
 
@@ -110,6 +123,18 @@ export default async function SignupPage({
             />
             <span className="auth-hint">At least 8 characters.</span>
           </label>
+          <div className="auth-checkbox-row">
+            <label className="auth-checkbox">
+              <input type="checkbox" name="age_confirmed" value="yes" />
+              I confirm I&apos;m 18 or over.
+            </label>
+            {params.age_required ? (
+              <span className="auth-checkbox-error" role="alert">
+                Align is for adults aged 18 and over. Please confirm your age
+                to continue.
+              </span>
+            ) : null}
+          </div>
           <button type="submit" className="btn-primary auth-submit">
             Create account
           </button>
