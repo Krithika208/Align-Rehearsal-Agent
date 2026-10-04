@@ -109,7 +109,7 @@ export default async function RehearsalDetailPage({
     <main className="app-shell">
       <header className="app-header">
         <a href="/rehearsals" className="app-back">
-          <span aria-hidden>←</span> My rehearsals
+          <span aria-hidden>←</span> Past rehearsals
         </a>
         <div className="app-header-right">
           <a href="/app" className="auth-logo">

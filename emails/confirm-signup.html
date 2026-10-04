@@ -35,20 +35,20 @@
                 <tr>
                   <td align="center" bgcolor="#0D2E4E" style="border-radius:8px;background-color:#0D2E4E;">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:52px;v-text-anchor:middle;width:480px;" arcsize="15%" stroke="f" fillcolor="#0D2E4E">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" style="height:52px;v-text-anchor:middle;width:480px;" arcsize="15%" stroke="f" fillcolor="#0D2E4E">
                       <w:anchorlock/>
                       <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Confirm my email</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->
-                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:block;padding:16px 24px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;font-weight:600;line-height:20px;color:#ffffff;text-decoration:none;border-radius:8px;">Confirm my email</a>
+                    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" target="_blank" style="display:block;padding:16px 24px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;font-weight:600;line-height:20px;color:#ffffff;text-decoration:none;border-radius:8px;">Confirm my email</a>
                     <!--<![endif]-->
                   </td>
                 </tr>
               </table>
               <p style="margin:16px 0 0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:14px;line-height:1.6;color:#5A5A5A;text-align:center;">Your first 5 rehearsals are free. No card needed.</p>
               <p style="margin:24px 0 4px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.6;color:#5A5A5A;text-align:left;">Button not working? Paste this link into your browser:</p>
-              <p style="margin:0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;color:#0D2E4E;word-break:break-all;"><a href="{{ .ConfirmationURL }}" target="_blank" style="color:#0D2E4E;text-decoration:underline;">{{ .ConfirmationURL }}</a></p>
+              <p style="margin:0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;color:#0D2E4E;word-break:break-all;"><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" target="_blank" style="color:#0D2E4E;text-decoration:underline;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email</a></p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;">
                 <tr><td style="border-top:1px solid #e3e8ec;font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>

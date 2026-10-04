@@ -6,7 +6,7 @@ import AppClient from "./AppClient";
 import { getFoundingPerk, requireAppAccess } from "@/lib/subscription";
 
 export const metadata = {
-  title: "Your rehearsals — Align",
+  title: "Rehearse — Align",
 };
 
 export default async function AppHome() {

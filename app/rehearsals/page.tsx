@@ -5,7 +5,7 @@ import HeaderMenu from "@/components/HeaderMenu";
 import { SCENARIOS, scenarioTitle } from "../app/scenarios";
 
 export const metadata = {
-  title: "My rehearsals — Align",
+  title: "Past rehearsals — Align",
 };
 
 const SCENARIO_BY_SLUG = Object.fromEntries(
@@ -70,14 +70,14 @@ export default async function RehearsalsPage() {
           variant="app"
           loggedIn
           links={[
-            { href: "/app", label: "Back to rehearse" },
+            { href: "/app", label: "Rehearse" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}
         />
       </header>
       <div className="app-inner app-inner-narrow">
         <div className="section-label">Your history</div>
-        <h1 className="app-heading">My rehearsals</h1>
+        <h1 className="app-heading">Past rehearsals</h1>
         <p className="app-sub">
           Every conversation you&apos;ve rehearsed with Jordan. Tap one to read
           the transcript.
