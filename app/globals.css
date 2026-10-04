@@ -78,29 +78,79 @@ body > nav {
   gap: 1.75rem;
 }
 
-/* Phones: keep the header on one line. Coaching is also in the footer
-   (livealign.co), and Account is one tap away in the /app header. */
-@media (max-width: 640px) {
-  body > nav { gap: 0.75rem; }
-  .logo { flex-shrink: 0; }
-  .logo img { height: 26px; }
-  .nav-links { gap: 0.9rem; }
-  .nav-link {
-    font-size: 0.72rem;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-  }
+/* Header links and the phone menu (components/HeaderMenu.tsx). Below 800px
+   the row of links folds into a three-line menu button. */
+.logo { flex-shrink: 0; }
+.nav-link, .app-nav-link, .app-logout, .app-back { white-space: nowrap; }
+.nav-logout {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
-@media (max-width: 480px) {
-  .nav-link-wide { display: none; }
+.hm {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
-/* Smallest phones: show just the mark, cropped from the same lockup. */
-@media (max-width: 350px) {
-  .logo img {
-    width: 26px;
-    object-fit: cover;
-    object-position: left center;
-  }
+.hm-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0 11px;
+  margin-right: -11px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.hm-toggle span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--navy);
+}
+.hm-panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: 200;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 0;
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(13, 46, 78, 0.12);
+}
+.hm-item {
+  display: block;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.hm-item:hover { color: var(--navy); background: rgba(13, 46, 78, 0.04); }
+.hm-logout { border-top: 1px solid var(--border-subtle); margin-top: 0.3rem; }
+@media (max-width: 800px) {
+  .hm .hm-row { display: none; }
+  .hm-toggle { display: flex; }
+}
+@media (min-width: 801px) {
+  .hm-panel { display: none; }
 }
 
 /* ── HERO ── */
@@ -639,7 +689,8 @@ footer a:hover { text-decoration: underline; }
 
 .app-header {
   position: relative;
-  z-index: 1;
+  /* Above the page content, so the phone menu opens over it. */
+  z-index: 20;
   max-width: 1100px;
   margin: 0 auto 2.5rem;
   display: flex;
@@ -1142,20 +1193,6 @@ footer a:hover { text-decoration: underline; }
   transition: color 0.2s;
 }
 .app-nav-link:hover { color: var(--navy); }
-
-@media (max-width: 640px) {
-  .app-nav-wide { display: none; }
-  .app-header-right { gap: 0.85rem; }
-  .app-nav-link,
-  .app-logout,
-  .app-back { white-space: nowrap; }
-  .app-nav-link { font-size: 0.8rem; }
-  .app-logout { font-size: 0.76rem; }
-}
-@media (max-width: 360px) {
-  .app-nav-link { font-size: 0.75rem; }
-  .app-logout { font-size: 0.72rem; }
-}
 
 /* my rehearsals — list */
 .rehearsals-list {
@@ -1771,6 +1808,13 @@ footer a:hover { text-decoration: underline; }
 }
 .pricing-grid .pricing-card {
   max-width: none;
+}
+/* Phones: stack the two plans. These repeat rules from the earlier 640px
+   block, which the base pricing rules above override because they come later. */
+@media (max-width: 640px) {
+  .pricing-shell { padding: 7rem 1.25rem 3rem; }
+  .pricing-card { padding: 2.25rem 1.5rem; }
+  .pricing-grid { grid-template-columns: 1fr; }
 }
 .pricing-cta a.btn-primary {
   display: inline-flex;

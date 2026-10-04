@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
+import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
@@ -44,14 +45,12 @@ export default function AppClient({
   initialVoice,
   userEmail,
   userName,
-  logoutAction,
 }: {
   freeSessionsUsed: number | null;
   foundingPerk: FoundingPerk | null;
   initialVoice: Voice;
   userEmail: string;
   userName: string | null;
-  logoutAction: () => Promise<void>;
 }) {
   const [step, setStep] = useState<Step>("pick");
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -441,7 +440,6 @@ export default function AppClient({
       freeSessionsUsed={freeSessionsUsed}
       greeting={greeting}
       onPick={pickScenario}
-      logoutAction={logoutAction}
     />
   );
 }
@@ -482,12 +480,10 @@ function PickerScreen({
   freeSessionsUsed,
   greeting,
   onPick,
-  logoutAction,
 }: {
   freeSessionsUsed: number | null;
   greeting: string;
   onPick: (s: Scenario) => void;
-  logoutAction: () => Promise<void>;
 }) {
   return (
     <main className="app-shell">
@@ -495,23 +491,16 @@ function PickerScreen({
         <a href="/" className="auth-logo">
           align<span>.</span>
         </a>
-        <div className="app-header-right">
-          <span className="app-user app-nav-wide">Hi, {greeting}</span>
-          <a href="/rehearsals" className="app-nav-link">
-            My rehearsals
-          </a>
-          <a href="/account" className="app-nav-link">
-            Account
-          </a>
-          <a href="https://livealign.co" className="app-nav-link app-nav-wide">
-            Coaching
-          </a>
-          <form action={logoutAction}>
-            <button type="submit" className="app-logout">
-              Log out
-            </button>
-          </form>
-        </div>
+        <HeaderMenu
+          variant="app"
+          loggedIn
+          before={<span className="app-user">Hi, {greeting}</span>}
+          links={[
+            { href: "/rehearsals", label: "My rehearsals" },
+            { href: "/account", label: "Account" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
       </header>
       <div className="app-inner">
         <FreeSessionsIndicator used={freeSessionsUsed} />
@@ -582,9 +571,12 @@ function SetupScreen({
         <button type="button" className="app-back" onClick={onBack}>
           <span aria-hidden>←</span> Back
         </button>
-        <a href="/" className="auth-logo">
-          align<span>.</span>
-        </a>
+        <div className="app-header-right">
+          <a href="/" className="auth-logo">
+            align<span>.</span>
+          </a>
+          <HeaderMenu variant="app" loggedIn links={[]} />
+        </div>
       </header>
       <div className="app-inner app-inner-narrow">
         <FreeSessionsIndicator used={freeSessionsUsed} />

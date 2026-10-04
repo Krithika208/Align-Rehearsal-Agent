@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderMenu from "@/components/HeaderMenu";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getFoundingPerk, getSubscriptionInfo } from "@/lib/subscription";
@@ -105,14 +106,14 @@ export default async function AccountPage({
             height={32}
           />
         </Link>
-        <div className="nav-links">
-          <Link href="/app" className="nav-link">
-            Your rehearsals
-          </Link>
-          <a href="https://livealign.co" className="nav-link nav-link-wide">
-            Coaching
-          </a>
-        </div>
+        <HeaderMenu
+          variant="site"
+          loggedIn
+          links={[
+            { href: "/app", label: "Your rehearsals" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
       </nav>
 
       <main className="account-shell">

@@ -9,13 +9,6 @@ export const metadata = {
   title: "Your rehearsals — Align",
 };
 
-async function logout() {
-  "use server";
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
-
 export default async function AppHome() {
   const supabase = await createClient();
   const {
@@ -45,7 +38,6 @@ export default async function AppHome() {
         initialVoice={initialVoice}
         userEmail={user.email ?? ""}
         userName={fullName}
-        logoutAction={logout}
       />
       <SiteFooter />
       <DebugPanel />

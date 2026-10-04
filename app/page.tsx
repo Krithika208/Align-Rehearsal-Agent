@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderMenu from "@/components/HeaderMenu";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import { SCENARIOS } from "./app/scenarios";
@@ -34,24 +35,18 @@ export default async function Home() {
             height={32}
           />
         </Link>
-        <div className="nav-links">
-          {!hasActiveSubscription && (
-            <Link href="/pricing" className="nav-link">
-              Pricing
-            </Link>
-          )}
-          {user && (
-            <Link href="/account" className="nav-link nav-link-wide">
-              Account
-            </Link>
-          )}
-          <Link href={user ? "/app" : "/login"} className="nav-link">
-            {user ? "Your rehearsals" : "Sign in"}
-          </Link>
-          <a href="https://livealign.co" className="nav-link nav-link-wide">
-            Coaching
-          </a>
-        </div>
+        <HeaderMenu
+          variant="site"
+          loggedIn={!!user}
+          links={[
+            ...(!hasActiveSubscription ? [{ href: "/pricing", label: "Pricing" }] : []),
+            ...(user ? [{ href: "/account", label: "Account" }] : []),
+            user
+              ? { href: "/app", label: "Your rehearsals" }
+              : { href: "/login", label: "Sign in" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
       </nav>
 
       {/* HERO */}
