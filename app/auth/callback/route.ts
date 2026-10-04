@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { RESET_COOKIE } from "@/lib/passwordReset";
 
+// Older email links (Supabase's default {{ .ConfirmationURL }}) come back here
+// with a one-time code. The code only works in the browser that signed up or
+// asked for the reset. New emails use /auth/confirm instead, which works in
+// any browser; this route stays for links already sent.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -18,14 +22,14 @@ export async function GET(request: NextRequest) {
     if (isReset) {
       return NextResponse.redirect(`${origin}/forgot-password?expired=1`);
     }
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message)}`
-    );
+    // Supabase confirms the email before sending the user here, so a failed
+    // code (a different browser, or used twice) still means it's confirmed.
+    return NextResponse.redirect(`${origin}/login?confirmed=1`);
   }
 
   // No code: Supabase sends expired or already-used links back without one.
   if (isReset) {
     return NextResponse.redirect(`${origin}/forgot-password?expired=1`);
   }
-  return NextResponse.redirect(`${origin}/login`);
+  return NextResponse.redirect(`${origin}/login?link=expired`);
 }

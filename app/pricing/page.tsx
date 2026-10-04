@@ -48,7 +48,7 @@ export default async function PricingPage({
         {reason === "free_limit_reached" && (
           <div className="pricing-banner" role="status">
             You&apos;ve used your 5 free rehearsals. Subscribe to keep
-            practising. Your past rehearsals are still in{" "}
+            practising. Your saved rehearsals are still in{" "}
             <Link href="/rehearsals">Past rehearsals</Link>.
           </div>
         )}

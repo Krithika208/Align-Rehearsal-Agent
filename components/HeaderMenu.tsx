@@ -70,10 +70,7 @@ export default function HeaderMenu({
   const onPage = new Set(links.map((l) => l.href));
   const menuLinks = MENU_ORDER.filter(
     (l) => onPage.has(l.href) || (loggedIn ? l.loggedIn : l.loggedOut)
-  ).map((l) => ({ href: l.href, label: links.find((x) => x.href === l.href)?.label ?? l.label }))
-    // "Rehearse" and the /rehearsals page header's "Back to rehearse" both go
-    // to /app; the menu always calls it "Rehearse".
-    .map((l) => (l.href === "/app" ? { ...l, label: "Rehearse" } : l));
+  ).map((l) => ({ href: l.href, label: links.find((x) => x.href === l.href)?.label ?? l.label }));
 
   const linkClass = variant === "site" ? "nav-link" : "app-nav-link";
   const logoutClass = variant === "site" ? "nav-link nav-logout" : "app-logout";

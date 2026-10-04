@@ -70,7 +70,7 @@ export default async function RehearsalsPage() {
           variant="app"
           loggedIn
           links={[
-            { href: "/app", label: "Back to rehearse" },
+            { href: "/app", label: "Rehearse" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}
         />

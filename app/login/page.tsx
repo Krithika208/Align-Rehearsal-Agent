@@ -27,7 +27,12 @@ async function login(formData: FormData) {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirectTo?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    redirectTo?: string;
+    confirmed?: string;
+    link?: string;
+  }>;
 }) {
   const params = await searchParams;
 
@@ -41,6 +46,18 @@ export default async function LoginPage({
           <h1 className="auth-heading">Welcome back</h1>
           <p className="auth-sub">Log in to keep rehearsing.</p>
 
+          {params.confirmed ? (
+            <div className="auth-notice" role="status">
+              Your email is confirmed. Please log in.
+            </div>
+          ) : null}
+          {params.link === "expired" ? (
+            <div className="auth-notice" role="status">
+              That link has expired or has already been used. If you&apos;ve
+              already confirmed your email, just log in. If not, sign up again
+              and we&apos;ll send you a new link.
+            </div>
+          ) : null}
           {params.error ? (
             <div className="auth-error">{params.error}</div>
           ) : null}
