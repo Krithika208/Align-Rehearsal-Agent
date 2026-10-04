@@ -2053,7 +2053,7 @@ footer a:hover { text-decoration: underline; }
 /* ── PRICING: founding perk inside the Pro card ── */
 .pricing-founding {
   margin: 1.5rem 0 0;
-  text-align: left;
+  text-align: center;
 }
 .pricing-founding .pricing-badge {
   margin-bottom: 0.75rem;
@@ -2062,10 +2062,10 @@ footer a:hover { text-decoration: underline; }
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: var(--navy);
+  color: var(--amber);
 }
 .pricing-founding-note {
   margin: 0.35rem 0 0;
   font-size: 0.82rem;
-  color: var(--text-secondary);
+  color: var(--amber);
 }
