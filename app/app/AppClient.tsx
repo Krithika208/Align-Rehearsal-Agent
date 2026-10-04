@@ -6,6 +6,7 @@ import FoundingPerkCard from "@/components/FoundingPerkCard";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
+import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -99,6 +100,8 @@ export default function AppClient({
 
   const startRehearsal = async () => {
     if (!scenario || !relationship || !situation.trim()) return;
+    // Debug log only (?debug=1). Does nothing otherwise.
+    markStartTap();
     setStarting(true);
     setError(null);
     setTranscript([]);
@@ -110,13 +113,16 @@ export default function AppClient({
       // Sort out the mic before the server counts this rehearsal.
       let micId: string | null;
       try {
+        dlog("mic check: start");
         micId = await prepareMic();
+        dlog(`mic check: done (${micId ? "pinned to a chosen mic" : "browser default"})`);
       } catch {
         throw new Error(
           "Align needs your microphone. Allow it in your browser, then try again."
         );
       }
 
+      dlog("server: asking to start the rehearsal");
       const res = await fetch("/api/elevenlabs/start-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,6 +134,7 @@ export default function AppClient({
           voice,
         }),
       });
+      dlog(`server: replied ${res.status}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (body.code === "free_limit_reached") {
@@ -152,6 +159,8 @@ export default function AppClient({
         };
       if (free_sessions_used !== null) setFreeSessionsUsed(free_sessions_used);
 
+      let playerAudio = 0;
+      dlog("SDK: startSession called");
       const conversation = await withMic(micId, () =>
         Conversation.startSession({
           signedUrl: signed_url,
@@ -162,9 +171,11 @@ export default function AppClient({
             situation: situation.trim(),
           },
           onModeChange: ({ mode }) => {
+            dlog(`SDK: mode ${mode}`);
             setMode(mode === "speaking" ? "speaking" : "listening");
           },
           onMessage: ({ message, source }) => {
+            dlog(`SDK: message from ${source} "${(message ?? "").slice(0, 40)}"`);
             if (!message) return;
             if (source === "user") {
               appendTurn("user", message);
@@ -172,14 +183,26 @@ export default function AppClient({
               appendTurn("agent", message);
             }
           },
-          onDisconnect: () => {
+          onDisconnect: (details) => {
+            dlog(`SDK: disconnected (${details?.reason ?? "unknown"})`);
             void finalizeCall();
           },
           onError: (msg) => {
+            dlog(`SDK: ERROR ${msg}`);
             setError(msg);
           },
+          onConnect: () => dlog("SDK: connected"),
+          onStatusChange: ({ status }) => dlog(`SDK: status ${status}`),
+          onAudio: () => {
+            playerAudio++;
+            dlog(`SDK: audio #${playerAudio} handed to player${playerAudio === 1 ? " (FIRST)" : ""}`);
+          },
+          onInterruption: (e) => dlog(`SDK: INTERRUPTION (event ${e?.event_id})`),
         })
       );
+      dlog("SDK: session ready");
+      logPlayerState(conversation, "session ready");
+      watchOutputLevel(conversation);
 
       activeCallRef.current = { conversation, dbId: conversation_db_id };
       startSessionTimer();
@@ -189,10 +212,14 @@ export default function AppClient({
       setSoundBlocked(false);
       window.setTimeout(() => {
         if (activeCallRef.current?.conversation === conversation) {
-          setSoundBlocked(isSoundBlocked(conversation));
+          const blocked = isSoundBlocked(conversation);
+          logPlayerState(conversation, "sound check");
+          dlog(`"Tap to hear Jordan" shown: ${blocked ? "YES" : "no"}`);
+          setSoundBlocked(blocked);
         }
       }, 1000);
     } catch (err) {
+      dlog(`start failed: ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`);
       const micGone =
         err instanceof Error &&
         (err.name === "OverconstrainedError" || err.name === "NotFoundError");
@@ -362,9 +389,11 @@ export default function AppClient({
         onTurnSoundOn={() => {
           const active = activeCallRef.current;
           if (!active) return;
-          void turnSoundOn(active.conversation).then(() =>
-            setSoundBlocked(isSoundBlocked(active.conversation))
-          );
+          dlog('"Tap to hear Jordan" tapped');
+          void turnSoundOn(active.conversation).then(() => {
+            logPlayerState(active.conversation, "after sound tap");
+            setSoundBlocked(isSoundBlocked(active.conversation));
+          });
         }}
       />
     );
