@@ -2,6 +2,17 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { useFormStatus } from "react-dom";
+
+// Lives inside the form so it can see when the request is in flight.
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn-primary auth-submit" disabled={pending}>
+      {pending ? "Creating your account..." : "Create account"}
+    </button>
+  );
+}
 
 export default function SignupForm({
   action,
@@ -76,9 +87,7 @@ export default function SignupForm({
           </span>
         ) : null}
       </div>
-      <button type="submit" className="btn-primary auth-submit">
-        Create account
-      </button>
+      <SubmitButton />
       <p className="auth-consent">
         By signing up, you agree to our{" "}
         <Link href="/terms">Terms of Service</Link> and{" "}

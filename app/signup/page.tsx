@@ -41,7 +41,14 @@ async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    // Supabase blocks a repeat sign-up email within a minute. Its own
+    // wording ("For security purposes...") reads like a fault, so swap it.
+    const message =
+      error.code === "over_email_send_rate_limit" ||
+      /for security purposes/i.test(error.message)
+        ? "We've just sent you an email. Please check your inbox, or try again in a minute."
+        : error.message;
+    redirect(`/signup?error=${encodeURIComponent(message)}`);
   }
 
   redirect("/signup?check_email=1");
