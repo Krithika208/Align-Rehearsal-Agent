@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderMenu from "@/components/HeaderMenu";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import PaidPlanCard from "./PaidPlanCard";
@@ -30,19 +31,17 @@ export default async function PricingPage({
             height={32}
           />
         </Link>
-        <div className="nav-links">
-          {user && (
-            <Link href="/account" className="nav-link nav-link-wide">
-              Account
-            </Link>
-          )}
-          <Link href={user ? "/app" : "/login"} className="nav-link">
-            {user ? "Your rehearsals" : "Sign in"}
-          </Link>
-          <a href="https://livealign.co" className="nav-link nav-link-wide">
-            Coaching
-          </a>
-        </div>
+        <HeaderMenu
+          variant="site"
+          loggedIn={!!user}
+          links={[
+            ...(user ? [{ href: "/account", label: "Account" }] : []),
+            user
+              ? { href: "/app", label: "Your rehearsals" }
+              : { href: "/login", label: "Sign in" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
       </nav>
 
       <main className="pricing-shell">

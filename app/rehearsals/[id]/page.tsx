@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
+import HeaderMenu from "@/components/HeaderMenu";
 import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
 import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
@@ -114,9 +115,11 @@ export default async function RehearsalDetailPage({
           <a href="/app" className="auth-logo">
             align<span>.</span>
           </a>
-          <a href="https://livealign.co" className="app-nav-link">
-            Coaching
-          </a>
+          <HeaderMenu
+            variant="app"
+            loggedIn
+            links={[{ href: "https://livealign.co", label: "Coaching" }]}
+          />
         </div>
       </header>
       <div className="app-inner app-inner-narrow">

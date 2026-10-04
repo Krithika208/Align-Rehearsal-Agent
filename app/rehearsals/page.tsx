@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
+import HeaderMenu from "@/components/HeaderMenu";
 import { SCENARIOS, scenarioTitle } from "../app/scenarios";
 
 export const metadata = {
@@ -65,14 +66,14 @@ export default async function RehearsalsPage() {
         <a href="/app" className="auth-logo">
           align<span>.</span>
         </a>
-        <div className="app-header-right">
-          <a href="/app" className="app-nav-link">
-            Back to rehearse
-          </a>
-          <a href="https://livealign.co" className="app-nav-link">
-            Coaching
-          </a>
-        </div>
+        <HeaderMenu
+          variant="app"
+          loggedIn
+          links={[
+            { href: "/app", label: "Back to rehearse" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
       </header>
       <div className="app-inner app-inner-narrow">
         <div className="section-label">Your history</div>
