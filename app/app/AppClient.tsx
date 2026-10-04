@@ -609,6 +609,10 @@ function SetupScreen({
         >
           {starting ? "Connecting…" : "Start rehearsal"}
         </button>
+        <p className="auth-hint setup-cap-note">
+          You have up to 20 minutes, including your debrief. Real
+          conversations come with a clock too.
+        </p>
       </div>
       {fairUseMessage && (
         <FairUseModal message={fairUseMessage} onClose={onDismissFairUse} />

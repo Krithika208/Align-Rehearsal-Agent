@@ -34,7 +34,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
 - **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values. When the plan has fully ended, `/account` shows a "Subscribe again" button to `/pricing`.
 - **Resubscribing:** checkout is blocked only while a subscription is still running (any status except `canceled` / `incomplete_expired`); the block message links to `/account`. A returning customer goes through normal checkout, reusing their saved Stripe customer. The webhook's `checkout.session.completed` upsert (one row per user) replaces the ended subscription with the new one. Their founding spot, claim and welcome email are untouched: no second spot, no reset, no second email.
-- **20-minute cap:** the paid card on `/pricing` says "Unlimited rehearsals with Jordan, up to 20 minutes each". The homepage does not repeat it.
+- **20-minute cap:** on `/pricing`, both cards say "up to 20 minutes each" (Free: "5 lifetime rehearsals with Jordan, up to 20 minutes each"; Paid: "Unlimited rehearsals with Jordan, up to 20 minutes each"), and a muted centred line below the cards says "Each rehearsal runs for up to 20 minutes, including your debrief." The setup screen has a muted line under "Start rehearsal": "You have up to 20 minutes, including your debrief. Real conversations come with a clock too." The homepage does not repeat the cap.
+- **Founding perk block on `/pricing`:** inside the paid card, centred. The "First 100 members" pill keeps the standard teal badge style; the two lines under it ("A free 1:1 coaching session with Krithika, Align's founder." and "Limited spots left.") are gold, `var(--amber)` (#C4943A), the colour they had before the block moved inside the card.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Privacy
@@ -115,7 +116,8 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
 
 - `signup-and-disclosures` merged to `main`: age confirmation at sign-up, 20-minute cap on `/pricing`, reassurance line on the setup screen.
-- Branch `signup-polish` (not yet on `main`): sign-up button disables while sending; friendly text for Supabase's email rate-limit message.
+- `signup-polish` merged to `main`: sign-up button disables while sending; friendly text for Supabase's email rate-limit message.
+- Branch `cap-copy` (not yet on `main`): 20-minute cap copy on both `/pricing` cards, below the cards, and on the setup screen; founding perk block centred with gold text.
 
 ## Branches not on main
 
