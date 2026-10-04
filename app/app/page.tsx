@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
+import DebugPanel from "@/components/DebugPanel";
 import AppClient from "./AppClient";
 import { getFoundingPerk, requireAppAccess } from "@/lib/subscription";
 
@@ -47,6 +48,7 @@ export default async function AppHome() {
         logoutAction={logout}
       />
       <SiteFooter />
+      <DebugPanel />
     </>
   );
 }

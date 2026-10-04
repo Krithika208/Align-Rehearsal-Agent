@@ -5,6 +5,8 @@ import { Conversation } from "@elevenlabs/client";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
+import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
+import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -65,6 +67,7 @@ export default function AppClient({
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
+  const [soundBlocked, setSoundBlocked] = useState(false);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
@@ -97,6 +100,8 @@ export default function AppClient({
 
   const startRehearsal = async () => {
     if (!scenario || !relationship || !situation.trim()) return;
+    // Debug log only (?debug=1). Does nothing otherwise.
+    markStartTap();
     setStarting(true);
     setError(null);
     setTranscript([]);
@@ -108,13 +113,16 @@ export default function AppClient({
       // Sort out the mic before the server counts this rehearsal.
       let micId: string | null;
       try {
+        dlog("mic check: start");
         micId = await prepareMic();
+        dlog(`mic check: done (${micId ? "pinned to a chosen mic" : "browser default"})`);
       } catch {
         throw new Error(
           "Align needs your microphone. Allow it in your browser, then try again."
         );
       }
 
+      dlog("server: asking to start the rehearsal");
       const res = await fetch("/api/elevenlabs/start-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,6 +134,7 @@ export default function AppClient({
           voice,
         }),
       });
+      dlog(`server: replied ${res.status}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (body.code === "free_limit_reached") {
@@ -150,6 +159,8 @@ export default function AppClient({
         };
       if (free_sessions_used !== null) setFreeSessionsUsed(free_sessions_used);
 
+      let playerAudio = 0;
+      dlog("SDK: startSession called");
       const conversation = await withMic(micId, () =>
         Conversation.startSession({
           signedUrl: signed_url,
@@ -160,9 +171,11 @@ export default function AppClient({
             situation: situation.trim(),
           },
           onModeChange: ({ mode }) => {
+            dlog(`SDK: mode ${mode}`);
             setMode(mode === "speaking" ? "speaking" : "listening");
           },
           onMessage: ({ message, source }) => {
+            dlog(`SDK: message from ${source} "${(message ?? "").slice(0, 40)}"`);
             if (!message) return;
             if (source === "user") {
               appendTurn("user", message);
@@ -170,19 +183,43 @@ export default function AppClient({
               appendTurn("agent", message);
             }
           },
-          onDisconnect: () => {
+          onDisconnect: (details) => {
+            dlog(`SDK: disconnected (${details?.reason ?? "unknown"})`);
             void finalizeCall();
           },
           onError: (msg) => {
+            dlog(`SDK: ERROR ${msg}`);
             setError(msg);
           },
+          onConnect: () => dlog("SDK: connected"),
+          onStatusChange: ({ status }) => dlog(`SDK: status ${status}`),
+          onAudio: () => {
+            playerAudio++;
+            dlog(`SDK: audio #${playerAudio} handed to player${playerAudio === 1 ? " (FIRST)" : ""}`);
+          },
+          onInterruption: (e) => dlog(`SDK: INTERRUPTION (event ${e?.event_id})`),
         })
       );
+      dlog("SDK: session ready");
+      logPlayerState(conversation, "session ready");
+      watchOutputLevel(conversation);
 
       activeCallRef.current = { conversation, dbId: conversation_db_id };
       startSessionTimer();
       setStep("calling");
+      // iPhone backstop: if sound is still off a moment after connecting,
+      // ask for one tap to turn it on (see lib/audioOutput.ts).
+      setSoundBlocked(false);
+      window.setTimeout(() => {
+        if (activeCallRef.current?.conversation === conversation) {
+          const blocked = isSoundBlocked(conversation);
+          logPlayerState(conversation, "sound check");
+          dlog(`"Tap to hear Jordan" shown: ${blocked ? "YES" : "no"}`);
+          setSoundBlocked(blocked);
+        }
+      }, 1000);
     } catch (err) {
+      dlog(`start failed: ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`);
       const micGone =
         err instanceof Error &&
         (err.name === "OverconstrainedError" || err.name === "NotFoundError");
@@ -202,6 +239,7 @@ export default function AppClient({
     const active = activeCallRef.current;
     if (!active) return;
     activeCallRef.current = null;
+    setSoundBlocked(false);
     stopTimerRef.current?.();
     stopTimerRef.current = null;
     const elId = active.conversation.getId?.() ?? null;
@@ -347,6 +385,16 @@ export default function AppClient({
         onTeachingMode={requestTeachingMode}
         onWrapUp={wrapUpRehearsal}
         onEnd={endRehearsal}
+        soundBlocked={soundBlocked}
+        onTurnSoundOn={() => {
+          const active = activeCallRef.current;
+          if (!active) return;
+          dlog('"Tap to hear Jordan" tapped');
+          void turnSoundOn(active.conversation).then(() => {
+            logPlayerState(active.conversation, "after sound tap");
+            setSoundBlocked(isSoundBlocked(active.conversation));
+          });
+        }}
       />
     );
   }
@@ -448,14 +496,14 @@ function PickerScreen({
           align<span>.</span>
         </a>
         <div className="app-header-right">
-          <span className="app-user">Hi, {greeting}</span>
+          <span className="app-user app-nav-wide">Hi, {greeting}</span>
           <a href="/rehearsals" className="app-nav-link">
             My rehearsals
           </a>
           <a href="/account" className="app-nav-link">
             Account
           </a>
-          <a href="https://livealign.co" className="app-nav-link">
+          <a href="https://livealign.co" className="app-nav-link app-nav-wide">
             Coaching
           </a>
           <form action={logoutAction}>
@@ -629,6 +677,8 @@ function CallScreen({
   onTeachingMode,
   onWrapUp,
   onEnd,
+  soundBlocked,
+  onTurnSoundOn,
 }: {
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
@@ -637,6 +687,8 @@ function CallScreen({
   onTeachingMode: () => void;
   onWrapUp: () => void;
   onEnd: () => void;
+  soundBlocked: boolean;
+  onTurnSoundOn: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -663,6 +715,15 @@ function CallScreen({
           <span className="call-visual-bar" />
         </div>
         <div className="call-name">Jordan</div>
+        {soundBlocked && (
+          <button
+            type="button"
+            className="btn-primary call-sound-btn"
+            onClick={onTurnSoundOn}
+          >
+            Tap to hear Jordan
+          </button>
+        )}
         <div className="call-status">
           {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
         </div>
