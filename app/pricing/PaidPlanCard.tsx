@@ -39,7 +39,7 @@ export default function PaidPlanCard() {
         <SubscribeButton label="Subscribe" billingInterval={interval} />
 
         <ul className="pricing-features">
-          <li>Unlimited rehearsals with Jordan</li>
+          <li>Unlimited rehearsals with Jordan, up to 20 minutes each</li>
           <li>All five themes, plus your own</li>
           <li>A coaching debrief after every conversation</li>
         </ul>

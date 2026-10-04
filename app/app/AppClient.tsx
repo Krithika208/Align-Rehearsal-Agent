@@ -575,6 +575,10 @@ function SetupScreen({
             onChange={(e) => setSituation(e.target.value)}
             placeholder="e.g. My manager keeps assigning me work that should go to a peer, and I want to push back without sounding unhelpful."
           />
+          <p className="auth-hint setup-privacy-note">
+            What you share here is encrypted before it&apos;s saved. Change
+            names if you&apos;d like. The rehearsal works just as well.
+          </p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}

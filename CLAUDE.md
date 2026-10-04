@@ -34,12 +34,15 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
 - **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values. When the plan has fully ended, `/account` shows a "Subscribe again" button to `/pricing`.
 - **Resubscribing:** checkout is blocked only while a subscription is still running (any status except `canceled` / `incomplete_expired`); the block message links to `/account`. A returning customer goes through normal checkout, reusing their saved Stripe customer. The webhook's `checkout.session.completed` upsert (one row per user) replaces the ended subscription with the new one. Their founding spot, claim and welcome email are untouched: no second spot, no reset, no second email.
+- **20-minute cap:** the paid card on `/pricing` says "Unlimited rehearsals with Jordan, up to 20 minutes each". The homepage does not repeat it.
 - **Session timing (all users):** app sends a time cue to Jordan at 15:00 and 18:00, and hangs up at 20:00. The cue strings in `app/app/AppClient.tsx` must match the ElevenLabs agent prompt exactly.
 
 ## Privacy
 
 - Rehearsal transcripts and situations are encrypted in the app before saving (`lib/encryption.ts`, AES-256-GCM envelope encryption, key `ENCRYPTION_MASTER_KEY` in Vercel). Supabase only holds ciphertext. Decrypted only on `/rehearsals/[id]` for the owner.
 - ElevenLabs data retention must be disabled on both Jordan agents (manual dashboard step).
+- Age confirmation: `/signup` (the only sign-up route) has an unticked "I confirm I'm 18 or over." box. Without it, `app/signup/SignupForm.tsx` blocks the submit in the browser and shows the adults-only message by the box, keeping what was typed. The server action checks again as a backstop (stops before calling Supabase: no account, no email; the page reloads with the message and empty fields, password never pre-filled). When ticked, `age_confirmed_at` (ISO timestamp) is saved in the user's metadata. Log-in is unchanged; older accounts have no `age_confirmed_at`.
+- Setup screen: under the situation box, a muted line says what users share is encrypted and they can change names. No "don't share" warning.
 - Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner.
 - Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. Branded templates live in `emails/` and are pasted into Supabase by hand.
 - The only app-sent email: Krithika's plain-text founding welcome (`lib/emails/founding-welcome.ts`), scheduled via Resend 3 days after a new founding perk is allocated in the Stripe webhook. `FOUNDING_EMAIL_DELAY_MINUTES` overrides the delay for testing.
@@ -108,8 +111,10 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 - `post-launch-fixes` merged to `main`: founding perk claimed only by a real Cal.com booking; `/account` shows a pending cancellation; friendly status labels.
 - `resubscribe-fix` merged to `main`: cancelled customers can subscribe again; header link "About" renamed "Coaching" (still to https://livealign.co).
 - Done on production, 2 Oct 2026: Stripe live mode on Production (Preview stays on the sandbox); Cal.com webhook set up, pointing at `rehearse.livealign.co/api/cal/webhook`.
-- Branch `mic-picker` (not yet on `main`): fixes the iPhone (Continuity) mic switching on; adds a microphone menu to the setup screen.
+- `mic-picker` merged to `main`: fixes the iPhone (Continuity) mic switching on; adds a microphone menu to the setup screen.
 - `pricing-v2` and `stripe-integration` have no changes that are not already on `main`. Safe to delete.
+
+- Branch `signup-and-disclosures` (not yet on `main`): age confirmation at sign-up, 20-minute cap on `/pricing`, reassurance line on the setup screen.
 
 ## Branches not on main
 

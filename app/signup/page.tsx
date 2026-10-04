@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import SignupForm from "./SignupForm";
 
 export const metadata = {
   title: "Sign up — Align",
@@ -13,6 +14,12 @@ async function signup(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
+  const ageConfirmed = formData.get("age_confirmed") === "yes";
+
+  // Checked before anything else: no account and no email without it.
+  if (!ageConfirmed) {
+    redirect("/signup?age_required=1");
+  }
 
   const headersList = await headers();
   const origin = headersList.get("origin") ?? headersList.get("host");
@@ -25,7 +32,10 @@ async function signup(formData: FormData) {
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: {
+        full_name: fullName,
+        age_confirmed_at: new Date().toISOString(),
+      },
       emailRedirectTo,
     },
   });
@@ -40,7 +50,11 @@ async function signup(formData: FormData) {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; check_email?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    check_email?: string;
+    age_required?: string;
+  }>;
 }) {
   const params = await searchParams;
 
@@ -77,49 +91,7 @@ export default async function SignupPage({
           <div className="auth-error">{params.error}</div>
         ) : null}
 
-        <form action={signup} className="auth-form">
-          <label className="auth-label">
-            Full name
-            <input
-              type="text"
-              name="full_name"
-              required
-              autoComplete="name"
-              className="auth-input"
-            />
-          </label>
-          <label className="auth-label">
-            Email
-            <input
-              type="email"
-              name="email"
-              required
-              autoComplete="email"
-              className="auth-input"
-            />
-          </label>
-          <label className="auth-label">
-            Password
-            <input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="auth-input"
-            />
-            <span className="auth-hint">At least 8 characters.</span>
-          </label>
-          <button type="submit" className="btn-primary auth-submit">
-            Create account
-          </button>
-          <p className="auth-consent">
-            By signing up, you agree to our{" "}
-            <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>, and acknowledge our{" "}
-            <Link href="/disclaimer">AI Coaching Disclaimer</Link>.
-          </p>
-        </form>
+        <SignupForm action={signup} initialAgeError={!!params.age_required} />
 
         <p className="auth-footer-link">
           Already have an account? <Link href="/login">Log in</Link>
