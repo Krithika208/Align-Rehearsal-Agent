@@ -37,7 +37,7 @@ export default async function PricingPage({
           links={[
             ...(user ? [{ href: "/account", label: "Account" }] : []),
             user
-              ? { href: "/app", label: "Your rehearsals" }
+              ? { href: "/app", label: "Rehearse" }
               : { href: "/login", label: "Sign in" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}
@@ -49,7 +49,7 @@ export default async function PricingPage({
           <div className="pricing-banner" role="status">
             You&apos;ve used your 5 free rehearsals. Subscribe to keep
             practising. Your past rehearsals are still in{" "}
-            <Link href="/rehearsals">My rehearsals</Link>.
+            <Link href="/rehearsals">Past rehearsals</Link>.
           </div>
         )}
         <div className="section-label">Pricing</div>

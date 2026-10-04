@@ -110,7 +110,7 @@ export default async function AccountPage({
           variant="site"
           loggedIn
           links={[
-            { href: "/app", label: "Your rehearsals" },
+            { href: "/app", label: "Rehearse" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}
         />

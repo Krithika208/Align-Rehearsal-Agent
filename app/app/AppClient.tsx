@@ -496,7 +496,7 @@ function PickerScreen({
           loggedIn
           before={<span className="app-user">Hi, {greeting}</span>}
           links={[
-            { href: "/rehearsals", label: "My rehearsals" },
+            { href: "/rehearsals", label: "Past rehearsals" },
             { href: "/account", label: "Account" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}

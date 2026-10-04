@@ -42,7 +42,7 @@ export default async function Home() {
             ...(!hasActiveSubscription ? [{ href: "/pricing", label: "Pricing" }] : []),
             ...(user ? [{ href: "/account", label: "Account" }] : []),
             user
-              ? { href: "/app", label: "Your rehearsals" }
+              ? { href: "/app", label: "Rehearse" }
               : { href: "/login", label: "Sign in" },
             { href: "https://livealign.co", label: "Coaching" },
           ]}

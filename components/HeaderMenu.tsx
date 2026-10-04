@@ -11,8 +11,8 @@ const COACHING = "https://livealign.co";
 // page's own header shows it, or when it's always in the menu for this user.
 const MENU_ORDER: { href: string; label: string; loggedIn?: boolean; loggedOut?: boolean }[] = [
   { href: "/pricing", label: "Pricing", loggedOut: true },
-  { href: "/app", label: "Your rehearsals", loggedIn: true },
-  { href: "/rehearsals", label: "My rehearsals" },
+  { href: "/app", label: "Rehearse", loggedIn: true },
+  { href: "/rehearsals", label: "Past rehearsals" },
   { href: "/account", label: "Account", loggedIn: true },
   { href: COACHING, label: "Coaching", loggedIn: true, loggedOut: true },
   { href: "/login", label: "Sign in", loggedOut: true },
@@ -71,9 +71,9 @@ export default function HeaderMenu({
   const menuLinks = MENU_ORDER.filter(
     (l) => onPage.has(l.href) || (loggedIn ? l.loggedIn : l.loggedOut)
   ).map((l) => ({ href: l.href, label: links.find((x) => x.href === l.href)?.label ?? l.label }))
-    // "Your rehearsals" and the /rehearsals page header's "Back to rehearse"
-    // both go to /app; the menu always calls it "Your rehearsals".
-    .map((l) => (l.href === "/app" ? { ...l, label: "Your rehearsals" } : l));
+    // "Rehearse" and the /rehearsals page header's "Back to rehearse" both go
+    // to /app; the menu always calls it "Rehearse".
+    .map((l) => (l.href === "/app" ? { ...l, label: "Rehearse" } : l));
 
   const linkClass = variant === "site" ? "nav-link" : "app-nav-link";
   const logoutClass = variant === "site" ? "nav-link nav-logout" : "app-logout";

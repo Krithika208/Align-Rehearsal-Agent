@@ -66,6 +66,9 @@ export default async function LoginPage({
                 autoComplete="current-password"
                 className="auth-input"
               />
+              <Link href="/forgot-password" className="auth-forgot">
+                Forgot password?
+              </Link>
             </label>
             <button type="submit" className="btn-primary auth-submit">
               Log in

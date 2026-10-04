@@ -627,6 +627,18 @@ footer a:hover { text-decoration: underline; }
   margin-top: 0.5rem;
 }
 
+.auth-forgot {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--teal);
+  text-decoration: none;
+}
+.auth-forgot:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .auth-submit {
   width: 100%;
   justify-content: center;
