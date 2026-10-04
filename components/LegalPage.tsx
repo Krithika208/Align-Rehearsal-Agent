@@ -52,6 +52,12 @@ export default async function LegalPage({ slug }: { slug: string }) {
             remarkPlugins={[remarkGfm]}
             components={{
               h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
+              // Wide tables scroll sideways on a phone instead of squashing.
+              table: ({ children }) => (
+                <div className="legal-table-wrap">
+                  <table>{children}</table>
+                </div>
+              ),
             }}
           >
             {markdown}

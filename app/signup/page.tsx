@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -67,43 +68,49 @@ export default async function SignupPage({
 
   if (params.check_email) {
     return (
+      <>
+        <main className="auth-shell">
+          <div className="auth-card">
+            <Link href="/" className="auth-logo">
+              align<span>.</span>
+            </Link>
+            <h1 className="auth-heading">Check your email</h1>
+            <p className="auth-sub">
+              We sent a confirmation link. Click it to activate your account, then
+              log in.
+            </p>
+            <Link href="/login" className="btn-primary auth-submit">
+              Go to log in
+            </Link>
+          </div>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
+  return (
+    <>
       <main className="auth-shell">
         <div className="auth-card">
           <Link href="/" className="auth-logo">
             align<span>.</span>
           </Link>
-          <h1 className="auth-heading">Check your email</h1>
-          <p className="auth-sub">
-            We sent a confirmation link. Click it to activate your account, then
-            log in.
+          <h1 className="auth-heading">Create your account</h1>
+          <p className="auth-sub">Start rehearsing the conversations you&apos;ve been avoiding.</p>
+
+          {params.error ? (
+            <div className="auth-error">{params.error}</div>
+          ) : null}
+
+          <SignupForm action={signup} initialAgeError={!!params.age_required} />
+
+          <p className="auth-footer-link">
+            Already have an account? <Link href="/login">Log in</Link>
           </p>
-          <Link href="/login" className="btn-primary auth-submit">
-            Go to log in
-          </Link>
         </div>
       </main>
-    );
-  }
-
-  return (
-    <main className="auth-shell">
-      <div className="auth-card">
-        <Link href="/" className="auth-logo">
-          align<span>.</span>
-        </Link>
-        <h1 className="auth-heading">Create your account</h1>
-        <p className="auth-sub">Start rehearsing the conversations you&apos;ve been avoiding.</p>
-
-        {params.error ? (
-          <div className="auth-error">{params.error}</div>
-        ) : null}
-
-        <SignupForm action={signup} initialAgeError={!!params.age_required} />
-
-        <p className="auth-footer-link">
-          Already have an account? <Link href="/login">Log in</Link>
-        </p>
-      </div>
-    </main>
+      <SiteFooter />
+    </>
   );
 }
