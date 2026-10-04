@@ -1,55 +1,44 @@
 # Privacy Policy
 
-**Effective date:** 13 May 2026
-**Last updated:** 2 October 2026
+Effective date: 13 May 2026. Last updated: 4 October 2026.
 
 ## 1. Who we are
 
-Align ("Align", "we", "us", "our") provides AI-powered conversation rehearsal for workplace professionals. Users practise difficult workplace conversations with a voice-based AI partner and receive a structured debrief.
+ALIGN LIFESTYLE PTE. LTD. ("Align", "we", "us", or "our") delivers AI-driven speech rehearsal tailored for working professionals. Our platform enables you to practice challenging workplace interactions alongside a conversational AI counterparty and obtain detailed feedback following each session.
 
-This Privacy Policy explains what personal data we collect, how we use it, who we share it with, and your rights. It applies to all use of our website at rehearse.livealign.co and livealign.co.
+This Privacy Policy outlines the personal data we gather, our processing practices, external disclosures, and the options available to you. These terms govern all visits to our domains at [rehearse.livealign.co](https://rehearse.livealign.co) and [livealign.co](https://livealign.co).
 
-**Operating entity:** ALIGN LIFESTYLE PTE. LTD.
-**UEN:** 202435232H
-**Incorporated:** 28 August 2024 (Singapore)
-**Registered office:** 1 Hoe Chiang Road, #01-01, Singapore 089310
-**Contact:** hello@livealign.co
+If you have questions regarding your personal details, please reach out to us at [privacy@livealign.co](mailto:privacy@livealign.co). You can find complete corporate disclosures in section 14.
 
 ## 2. Scope and applicable law
 
-Align is operated from Singapore and made available globally. We comply with the Singapore Personal Data Protection Act 2012 ("PDPA"). Where users are located in jurisdictions with additional data protection laws — including the EU General Data Protection Regulation ("EU GDPR"), the UK GDPR, the California Consumer Privacy Act ("CCPA"), or equivalent — we also comply with the requirements of those laws in respect of those users.
+Align is operated from Singapore and made available globally. We handle personal data in line with the Singapore Personal Data Protection Act 2012 ("PDPA"), the European Union's General Data Protection Regulation (“GDPR”), the [UK General Data Protection Regulation (“UK GDPR”)](https://www.legislation.gov.uk/eur/2016/679/contents) and any other data protection laws that apply to us.
 
 This policy is written to give all users a clear, equivalent set of rights regardless of where they are located.
 
 ## 3. Data we collect
 
-When you use Align, we collect the following:
+When you use Align, we may collect the following types of personal data:
 
 **Account data**
-- Email address (for sign-up and authentication)
-- Name (if you choose to provide it)
-- Authentication metadata (sign-in times, session tokens)
+
+Information you give us to create and manage your account, such as your contact details (such as email address and name) and sign-in information.
 
 **Rehearsal data**
-- The scenario type you select (e.g. "Deliver tough feedback")
-- The relationship you select (e.g. "Manager", "Direct report")
-- The short situation description you write before each rehearsal
-- The full transcript of each voice rehearsal (text only — audio is processed in real time and not stored)
-- The date, time, and duration of each rehearsal
-- Your answers to the short questions after a rehearsal (whether you've had the real conversation yet, and how it went)
-- Your preferred voice for Jordan
+
+Information you give us to set up a rehearsal, the written record of each rehearsal, and any feedback you give us afterwards. Audio is processed in real time and is not stored by Align.
+
+**Your workplace and other people**
+
+Align works best when you describe your real situation. Please don't share confidential employer information, such as trade secrets or passwords. Please also leave out personal details about other people that the rehearsal doesn't need. A first name and a role is usually enough.
 
 **Subscription and usage data**
-- Your plan (Free or Pro), billing interval, and subscription status
-- How many rehearsals you've used (to apply the free limit and fair-use limit)
-- Payment card details are entered directly with Stripe. We never see or store your full card number.
+
+Information about your plan, billing and subscription status.
 
 **Technical data**
-- IP address (for security and abuse prevention)
-- Browser type, device type, and operating system
-- Essential session cookies (required for authentication)
-- Your cookie choice, saved in your browser
-- Analytics cookies and identifiers, only if you accept them (see section 5)
+
+Information about your device, browser and connection, and analytical data on how you use Align. This includes information collected through cookies and similar technologies (see section 5).
 
 We do not currently use advertising trackers or marketing cookies. If we add any in future, we will update this policy and request your consent where required.
 
@@ -64,18 +53,20 @@ We use your personal data to:
 - Respond to support requests
 - Comply with legal obligations
 
+If you are in the European Economic Area or the United Kingdom, section 9 sets out the legal basis we rely on for each of these uses.
+
 We do not sell your personal data. We do not use your rehearsal transcripts to train AI models.
 
 ## 5. Cookies and analytics
 
-**Essential cookies** keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
+Essential cookies keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
 
-**Analytics cookies** help us understand how Align is used so we can improve it. We use **Google Analytics 4** (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns. Google processes this data on our behalf. See https://policies.google.com/privacy for details.
+Analytics cookies help us understand how Align is used so we can improve it. We use Google Analytics 4 (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns.
 
 Analytics only runs if you agree to it. When you first visit, a banner asks you to choose:
 
-- **Accept all:** essential cookies plus analytics
-- **Essential only:** essential cookies only. No analytics runs.
+- Accept all: essential cookies plus analytics
+- Essential only: essential cookies only. No analytics runs.
 
 We remember your choice in your browser for 12 months. You can change it at any time with the "Cookie preferences" link at the bottom of every page.
 
@@ -83,88 +74,87 @@ We do not use advertising or marketing cookies.
 
 ## 6. Service providers
 
-To provide the service, we share certain data with the following third-party providers, who act as data processors on our behalf:
+To provide the service, we share certain data with the types of service provider below. Each one receives only what it needs for its role.
 
-**ElevenLabs, Inc.** (United States) — runs the live voice conversation with Jordan: speech recognition and voice generation. Your words and Jordan's replies pass through ElevenLabs during the call. We have turned off data retention with ElevenLabs, so they do not keep your recordings or transcripts after the call ends. See https://elevenlabs.io/privacy
+| Type of provider               | Location                             | What it does for Align                                                                    |
+|--------------------------------|--------------------------------------|-------------------------------------------------------------------------------------------|
+| Voice and AI providers         | United States                        | Run the live voice conversation with Jordan and generate Jordan's responses.              |
+| Hosting and database providers | United States and the European Union | Host our website and app, run sign-in, and store your account data and rehearsal records. |
+| Payment provider               | United States                        | Processes subscription payments.                                                          |
+| Email providers                | United States                        | Send account emails and provide our business email.                                       |
+| Analytics provider             | United States                        | Helps us understand how Align is used, only for visitors who accept analytics cookies.    |
+| Scheduling provider            | United States                        | Lets you book a call with us, if you choose to.                                           |
 
-**Anthropic, PBC** (United States) — provides the AI model (Claude) that powers Jordan, via ElevenLabs. Your conversation and the rehearsal setup are sent to Claude during the call to generate Jordan's responses. Anthropic does not use this data to train their models. See https://www.anthropic.com/privacy
+We have set our voice provider not to keep your recordings or transcripts after a call ends. Under our providers' terms, your conversations may not be used to train AI models.
 
-**Supabase, Inc.** (United States) — provides our database and sign-in system. Stores your account data and your encrypted rehearsal records. See https://supabase.com/privacy
-
-**Vercel, Inc.** (United States) — hosts our website and receives standard server access logs. See https://vercel.com/legal/privacy-policy
-
-**Stripe, Inc.** (United States) — processes subscription payments. Stripe receives your email, billing details, and payment card. See https://stripe.com/privacy
-
-**Resend, Inc.** (United States) — sends account emails, such as sign-up confirmation and password reset. Receives your email address and the content of those emails. See https://resend.com/legal/privacy-policy
-
-**Google LLC** (United States) — provides Google Workspace for our email. If you contact us, your message is processed by Google. Google also provides Google Analytics, only for visitors who accept analytics cookies (see section 5). See https://policies.google.com/privacy
-
-Each of these processors operates under their own data protection terms. We have data processing agreements in place where required.
+Each provider operates under its own data protection terms. We have data processing agreements in place where required. You may seek further information on our service providers by emailing [privacy@livealign.co](mailto:privacy@livealign.co).
 
 ## 7. International transfers
 
-Align operates from Singapore, and most of our service providers are based in the United States. When your data is transferred across borders, we rely on appropriate safeguards, which may include Standard Contractual Clauses (SCCs), the Singapore PDPA's data transfer requirements (such as written agreements binding the recipient to a comparable standard of protection), or equivalent mechanisms recognised under applicable law.
+Align operates from Singapore, and most of our service providers are based in the United States. Your account and rehearsal data are stored on servers in Ireland, in the European Union. Because we run Align from Singapore and use providers in other countries, your data may be transferred to, or accessed from, countries outside the one you live in. When your data is transferred across borders, we rely on appropriate safeguards. These may include Standard Contractual Clauses (SCCs), the Singapore PDPA's data transfer requirements (such as written agreements binding the recipient to a comparable standard of protection), or equivalent mechanisms recognised under applicable law.
 
-For users in the EU/UK, transfers to the United States and other third countries are made under the relevant safeguards required by EU/UK GDPR.
+For users in the EU and UK, transfers to the United States and other third countries are made under the safeguards required by EU and UK GDPR.
 
 ## 8. Data retention
 
-- **Account data:** kept while your account is active. Deleted within 30 days of account closure, except where we are legally required to keep certain records for longer (for example, payment records for tax purposes).
-- **Rehearsal data** (transcripts, situation descriptions, and your answers after each rehearsal): kept for as long as your account is open, so you can look back on your rehearsals. Deleted when you close your account, or sooner if you ask us to delete specific rehearsals.
-- **Server logs:** kept for up to 90 days for security purposes.
-- **Analytics data:** kept for up to 14 months, only for visitors who accepted analytics cookies.
+We keep your personal data only for as long as we need it for the purposes described in this policy, or for as long as the law requires.
 
-To close your account or delete rehearsals, email us (see section 10).
+- **Account data:** kept while your account is active. Deleted within a reasonable period after you close your account, except where we are legally required to keep certain records for longer (for example, payment records for tax purposes).
+- **Rehearsal data** (transcripts, situation descriptions, and your answers after each rehearsal): kept for as long as your account is open, so you can look back on your rehearsals. Deleted within a reasonable period after you close your account, or sooner if you ask us to delete specific rehearsals.
+- **Server logs:** kept for a limited period for security purposes.
+- **Analytics data:** kept for a limited period, only for visitors who accepted analytics cookies.
 
-## 9. Legal basis for processing
+## 9. Legal bases for processing
 
-We process your personal data on the following bases:
+The table below shows the legal basis we rely on for each purpose identified in section 4.
 
-- **Performance of a contract** — to provide the service you have signed up for
-- **Legitimate interests** — to operate, secure, and improve the service
-- **Consent** — for analytics cookies (where required) and any future marketing communications
-- **Legal obligation** — where we must process data to comply with law
+| What we use your data for                                   | Legal basis                                                                                                        |
+|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| Provide the rehearsal service                               | Performance of our contract with you (contractual necessity).                                                      |
+| Authenticate your account and keep it secure                | Performance of our contract with you, and our legitimate interest in keeping Align and its users safe from misuse. |
+| Save your rehearsal history so you can review past sessions | Performance of our contract with you.                                                                              |
+| Understand product usage and improve the service            | Our legitimate interest in understanding how Align is used and improving it. For analytics cookies, your consent.  |
+| Respond to support requests                                 | Performance of our contract with you, or our legitimate interest in responding to people who contact us.           |
+| Comply with legal obligations                               | Compliance with a legal obligation.                                                                                |
+
+Where we rely on your consent, you can withdraw it at any time. Withdrawing consent does not affect anything we did before you withdrew it.
+
+We need your account and rehearsal data to provide the service. If you choose not to give it to us, we cannot run rehearsals for you.
 
 ## 10. Your rights
 
 Regardless of where you are located, you have the right to:
 
-- **Access** the personal data we hold about you
-- **Correct** inaccurate or incomplete data
-- **Delete** your data (the "right to be forgotten" / right to erasure)
-- **Restrict** processing in certain circumstances
-- **Object** to processing based on legitimate interests
-- **Receive your data in a portable format** (data portability)
-- **Withdraw consent** at any time, where we rely on consent
-- **Lodge a complaint** with your local data protection authority
+- Access the personal data we hold about you
+- Correct inaccurate or incomplete data
+- Delete your data (the "right to be forgotten" or right to erasure for EU and UK residents)
+- Restrict processing in certain circumstances (for EU and UK residents)
+- Object to processing based on legitimate interests (for EU and UK residents)
+- Receive your data in a portable format (data portability)
+- Withdraw consent at any time, where we rely on consent as the legal basis
+- Lodge a complaint with your local data protection authority
 
-To exercise any of these rights, email us at hello@livealign.co from the email address on your account. For example:
+To exercise any of these rights, email us at [privacy@livealign.co](mailto:privacy@livealign.co) from the email address on your account.
 
-- **Get a copy of your data**, including your rehearsal transcripts, in a portable format
-- **Delete specific rehearsals**, or close your account and delete everything
+We will respond within one month (or 30 days) from the day we receive your request. If a request is complex, the law may allow us more time. If we need it, we will tell you within the first month and explain why.
 
-We will respond within 30 days.
+If you are unhappy with how we have handled your personal data, please tell us first by emailing [privacy@livealign.co](mailto:privacy@livealign.co). You can also complain to a data protection authority at any time.
 
-In Singapore, you may also contact the Personal Data Protection Commission (PDPC) at https://www.pdpc.gov.sg. Users in the EU may contact their national data protection authority; users in the UK may contact the Information Commissioner's Office (ICO) at https://ico.org.uk; users in California have the right to contact the California Attorney General.
+In Singapore, you may also contact the Personal Data Protection Commission (PDPC) at [https://www.pdpc.gov.sg](https://www.pdpc.gov.sg). Users in the EU may contact their national data protection authority. Users in the UK may contact the Information Commissioner's Office (ICO) at [https://ico.org.uk](https://ico.org.uk).
 
 ## 11. Security
 
 We protect your data using industry-standard security measures, including:
 
-- Encryption in transit (HTTPS/TLS)
-- Encryption at rest (provided by our database infrastructure)
-- Role-based access controls
+- Encryption
+- Access controls
 - Regular security updates
-
-Your rehearsal transcripts are encrypted at rest. They are not accessible to Align team members through our database systems, and are not readable in the event of a data breach affecting our storage layer. Only you can view your own transcripts through your account.
-
-The situation descriptions you write before each rehearsal are protected in the same way. Each one is locked to your account, so it can't be opened from anyone else's.
 
 No system is perfectly secure. If we become aware of a personal data breach that is likely to result in significant harm or significant impact on your rights, we will notify the relevant authorities and you in line with our legal obligations.
 
 ## 12. Children
 
-Align is not directed at users under the age of 16. We do not knowingly collect personal data from anyone under 16. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.
+Align is for adults aged 18 and over. We do not knowingly collect personal data from anyone under 18. If you believe a child has provided us with personal data, please contact us and we will delete it promptly.
 
 ## 13. Changes to this policy
 
@@ -172,9 +162,14 @@ We may update this Privacy Policy from time to time. Material changes will be no
 
 ## 14. Contact us
 
-Questions, requests, or complaints? Email **hello@livealign.co**.
+Questions, requests, or complaints? Email [hello@livealign.co](mailto:hello@livealign.co). For anything about your personal data, email [privacy@livealign.co](mailto:privacy@livealign.co). One of our founders acts as our data protection contact and will handle your request.
 
-**ALIGN LIFESTYLE PTE. LTD.**
+Our registered office is located at:
+
+ALIGN LIFESTYLE PTE. LTD.
+
 1 Hoe Chiang Road, #01-01
+
 Singapore 089310
+
 UEN: 202435232H

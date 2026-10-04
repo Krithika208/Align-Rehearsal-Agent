@@ -1312,6 +1312,31 @@ footer a:hover { text-decoration: underline; }
 .legal-article a:hover {
   color: var(--navy);
 }
+.legal-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 0 1.25rem;
+}
+.legal-table-wrap table {
+  border-collapse: collapse;
+  min-width: 560px;
+  width: 100%;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.legal-table-wrap th,
+.legal-table-wrap td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+.legal-table-wrap th {
+  font-weight: 600;
+  color: var(--navy);
+  background: rgba(0, 0, 0, 0.03);
+}
+
 .legal-article hr {
   border: none;
   border-top: 1px solid var(--border-subtle);
@@ -1501,6 +1526,12 @@ footer a:hover { text-decoration: underline; }
   color: var(--text-secondary);
   font-weight: 300;
   text-align: center;
+}
+
+.pricing-cap-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .pricing-banner {

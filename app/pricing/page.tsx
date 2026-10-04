@@ -89,6 +89,7 @@ export default async function PricingPage({
 
         <p className="pricing-cap-note">
           Each rehearsal runs for up to 20 minutes, including your debrief.
+          Pro is subject to <Link href="/terms">fair use</Link>.
         </p>
 
         <p className="pricing-finecopy">
