@@ -8,6 +8,7 @@ import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
 import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
+import { createSignalTracker, type SignalTracker } from "@/lib/rehearsalSignals";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -73,6 +74,16 @@ export default function AppClient({
   const transcriptRef = useRef<TranscriptTurn[]>([]);
   const wrappingUpRef = useRef(false);
   const stopTimerRef = useRef<(() => void) | null>(null);
+  // How the rehearsal unfolds and ends, as numbers and labels only (see
+  // lib/rehearsalSignals.ts). Never allowed to break a rehearsal.
+  const signalsRef = useRef<SignalTracker | null>(null);
+  const signal = (record: (t: SignalTracker) => void) => {
+    try {
+      if (signalsRef.current) record(signalsRef.current);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const appendTurn = useCallback((role: "user" | "agent", text: string) => {
     const trimmed = text?.trim();
@@ -159,6 +170,7 @@ export default function AppClient({
       if (free_sessions_used !== null) setFreeSessionsUsed(free_sessions_used);
 
       let playerAudio = 0;
+      signalsRef.current = createSignalTracker();
       dlog("SDK: startSession called");
       const conversation = await withMic(micId, () =>
         Conversation.startSession({
@@ -177,20 +189,32 @@ export default function AppClient({
             dlog(`SDK: message from ${source} "${(message ?? "").slice(0, 40)}"`);
             if (!message) return;
             if (source === "user") {
+              signal((t) => t.userTurn(message));
               appendTurn("user", message);
             } else if (source === "ai") {
+              signal((t) => t.jordanTurn(message));
               appendTurn("agent", message);
             }
           },
+          onAgentToolResponse: (r) => {
+            if (r?.tool_name === "end_call") signal((t) => t.ended("jordan"));
+          },
           onDisconnect: (details) => {
             dlog(`SDK: disconnected (${details?.reason ?? "unknown"})`);
+            if (details?.reason === "error") signal((t) => t.ended("connection_lost"));
+            if (details?.reason === "agent" && details.context?.type === "end_call") {
+              signal((t) => t.ended("jordan"));
+            }
             void finalizeCall();
           },
           onError: (msg) => {
             dlog(`SDK: ERROR ${msg}`);
             setError(msg);
           },
-          onConnect: () => dlog("SDK: connected"),
+          onConnect: () => {
+            dlog("SDK: connected");
+            signal((t) => t.connected());
+          },
           onStatusChange: ({ status }) => dlog(`SDK: status ${status}`),
           onAudio: () => {
             playerAudio++;
@@ -214,11 +238,13 @@ export default function AppClient({
           const blocked = isSoundBlocked(conversation);
           logPlayerState(conversation, "sound check");
           dlog(`"Tap to hear Jordan" shown: ${blocked ? "YES" : "no"}`);
+          if (blocked) signal((t) => t.audioPromptShown());
           setSoundBlocked(blocked);
         }
       }, 1000);
     } catch (err) {
       dlog(`start failed: ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`);
+      signalsRef.current = null;
       const micGone =
         err instanceof Error &&
         (err.name === "OverconstrainedError" || err.name === "NotFoundError");
@@ -246,6 +272,13 @@ export default function AppClient({
       source: t.role === "agent" ? "ai" : "user",
       message: t.text,
     }));
+    let signals: unknown = null;
+    try {
+      signals = signalsRef.current?.snapshot() ?? null;
+    } catch {
+      /* the rehearsal still saves */
+    }
+    signalsRef.current = null;
     try {
       await fetch("/api/elevenlabs/end-conversation", {
         method: "POST",
@@ -254,6 +287,7 @@ export default function AppClient({
           conversation_db_id: active.dbId,
           el_conversation_id: elId,
           transcript: transcriptPayload,
+          signals,
         }),
       });
     } catch {
@@ -281,6 +315,7 @@ export default function AppClient({
       if (elapsed >= HARD_STOP_AT_MS) {
         // Deterministic hard stop: hang up and go to the complete screen even
         // if endSession hangs. finalizeCall only runs once.
+        signal((t) => t.ended("time_limit"));
         active.conversation.endSession().catch(() => {});
         void finalizeCall();
         return;
@@ -292,6 +327,7 @@ export default function AppClient({
         if (!wrappingUpRef.current) {
           try {
             active.conversation.sendUserMessage(WRAP_CUE);
+            signal((t) => t.timeCue());
             wrappingUpRef.current = true;
             setWrappingUp(true);
           } catch {
@@ -324,9 +360,10 @@ export default function AppClient({
   const requestTeachingMode = () => {
     const active = activeCallRef.current;
     if (!active || teachingDisabled) return;
-    const signal = "[The user has requested teaching mode]";
+    const teachingSignal = "[The user has requested teaching mode]";
     try {
-      active.conversation.sendUserMessage(signal);
+      active.conversation.sendUserMessage(teachingSignal);
+      signal((t) => t.stuckButton());
       setTeachingDisabled(true);
       setTimeout(() => setTeachingDisabled(false), 5000);
     } catch (err) {
@@ -340,6 +377,7 @@ export default function AppClient({
     const message = "I'd like to wrap up and move to the debrief now.";
     try {
       active.conversation.sendUserMessage(message);
+      signal((t) => t.wrapButton());
       appendTurn("user", message);
       wrappingUpRef.current = true;
       setWrappingUp(true);
@@ -354,6 +392,7 @@ export default function AppClient({
       setStep("complete");
       return;
     }
+    signal((t) => t.ended("end_call_now"));
     try {
       await active.conversation.endSession();
     } catch {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { encryptTranscript, toBytea } from "@/lib/encryption";
+import { parseSignals } from "@/lib/rehearsalSignals";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
     conversation_db_id?: string;
     el_conversation_id?: string | null;
     transcript?: unknown;
+    signals?: unknown;
   };
   try {
     body = await req.json();
@@ -87,6 +89,25 @@ export async function POST(req: Request) {
       { error: `Failed to update: ${updateError.message}` },
       { status: 500 }
     );
+  }
+
+  // How the rehearsal unfolded and ended: labels and numbers only, checked
+  // field by field. Written separately and best-effort, so a bad value or a
+  // missing column never stops the rehearsal itself from saving.
+  if (body.signals != null) {
+    const signals = parseSignals(body.signals);
+    if (!signals) {
+      console.error("[end-conversation] rejected rehearsal signals");
+    } else {
+      const { error: signalsError } = await supabase
+        .from("conversations")
+        .update(signals)
+        .eq("id", id)
+        .eq("user_id", user.id);
+      if (signalsError) {
+        console.error("[end-conversation] saving signals failed:", signalsError.message);
+      }
+    }
   }
 
   // Empty outcome row for the "did you have the real conversation?" card.

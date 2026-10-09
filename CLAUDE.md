@@ -51,6 +51,7 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 - Cookie consent: `components/CookieBanner.tsx` + `lib/consent.ts` (localStorage, 365 days). Any analytics must check `hasAnalyticsConsent()` and listen for `CONSENT_EVENT` before loading. "Cookie preferences" in the footer reopens the banner. Every page shows `components/SiteFooter.tsx` (including `/login` and both `/signup` views), so the Privacy Policy's "at the bottom of every page" is true; add it to any new page.
 - Auth emails (confirmation, password reset) come from Supabase via Resend SMTP as hello@livealign.co. Branded templates live in `emails/` and are pasted into Supabase by hand.
 - The only app-sent email: Krithika's plain-text founding welcome (`lib/emails/founding-welcome.ts`), scheduled via Resend 3 days after a new founding perk is allocated in the Stripe webhook. `FOUNDING_EMAIL_DELAY_MINUTES` overrides the delay for testing.
+- Rehearsal end signals (`lib/rehearsalSignals.ts`): how each rehearsal unfolds and ends, as labels and numbers only, never words. Columns on `conversations` (not encrypted, since they hold no content): `debrief_trigger` (`button`, `time_cue`, `user_asked`, `jordan`, `none`), `debrief_started_seconds` (from connect; empty with no debrief), `ended_by` (`jordan` = his end-call tool, `end_call_now`, `time_limit`, `connection_lost`, `unknown`), `user_turns_before_debrief`, `jordan_turns_before_debrief` (whole call if no debrief), `stuck_count`, `device_class` (`mobile`, `desktop`), `audio_prompt_shown`. The browser tracks them during the call (`AppClient.tsx`, via `signal(...)`) and sends them with the existing end-of-rehearsal save; `end-conversation` checks every field against the allowed values (`parseSignals`), writes them in a separate best-effort update for the session's user only, and never lets them stop the rehearsal saving. The database also rejects anything outside the allowed labels and ranges. **Detection depends on Jordan's exact phrases** in `JORDAN_PHRASES`: "stepping out of character" starts the debrief, "stepping out for a moment" is teaching mode. If his ElevenLabs prompt wording changes, change these too. "user_asked" means the user's last spoken turn before the debrief contained "wrap up" or "debrief". `ended_by = unknown` includes ElevenLabs closing the call cleanly without Jordan's end-call tool (for example, an agent maximum-duration setting). Tested only against a fake ElevenLabs and Supabase so far.
 - `rehearsal_outcomes` captures "did you have the real conversation?" on the complete screen. Delayed follow-up is future work.
 
 ## Build philosophy
@@ -97,12 +98,13 @@ Migrations live in `db/migrations/` and are run by hand in the Supabase SQL edit
 6. `2026_09_30_wipe_test_conversations.sql` (one-off, destructive)
 7. `2026_09_30_drop_plaintext_columns.sql` (only once the encrypting code is live, which it now is on `main`)
 8. `2026_10_02_founding_perk_booking.sql` (adds `booking_ref`, email lookup function, resets all click-based claims; run once)
+9. `2026_10_09_rehearsal_end_signals.sql` (adds the rehearsal end-signal columns; only adds columns, safe to run twice)
 
 Run on production on 2 Oct 2026: `founding_perk_booking`, `wipe_test_conversations`, `drop_plaintext_columns` (the plaintext columns no longer exist). Earlier ones are not recorded; check in Supabase before running anything.
 
 The `founding_perks` table was emptied on production on 2 Oct 2026, so all 100 founding spots are open.
 
-Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`.
+Tables: `profiles`, `conversations` (including the end-signal columns), `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`.
 
 ## How to work with Krithika
 
@@ -127,7 +129,8 @@ Tables: `profiles`, `conversations`, `subscriptions`, `usage_counters`, `foundin
 - `legal-pages-update` merged to `main`: Privacy Policy and Terms of Service replaced on 4 October 2026; "Pro is subject to fair use" added under the `/pricing` cards; site footer added to `/login` and `/signup`.
 - `mobile-fixes` merged to `main`: headers fit on one line on phones; SDK 1.26.0 plus the "Tap to hear Jordan" backstop, which did not fix the silent opening line on a real iPhone; `?debug=1` audio log on `/app` to find the real cause.
 - `phone-menu` merged to `main`: phone menu and "Log out" in every header; log out goes to the homepage; pricing cards stack on phones.
-- Branch `password-reset` (not yet on `main`): "Forgot password?" flow; email links that work in any browser (`/auth/confirm`, new templates in `emails/`, to paste into Supabase after merging); links renamed "Rehearse" and "Past rehearsals".
+- `password-reset` merged to `main`: "Forgot password?" flow; email links that work in any browser (`/auth/confirm`, new templates in `emails/`, to paste into Supabase after merging); links renamed "Rehearse" and "Past rehearsals".
+- Branch `rehearsal-end-signals` (not yet on `main`): records how each rehearsal ends, as labels and numbers. Run migration 9 before or after merging; until it runs, rehearsals save as normal and the signals are skipped.
 
 ## Branches not on main
 
