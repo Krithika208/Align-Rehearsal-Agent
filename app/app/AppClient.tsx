@@ -8,7 +8,11 @@ import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
 import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
-import { createSignalTracker, type SignalTracker } from "@/lib/rehearsalSignals";
+import {
+  createSignalTracker,
+  endReasonFromDisconnect,
+  type SignalTracker,
+} from "@/lib/rehearsalSignals";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -196,15 +200,16 @@ export default function AppClient({
               appendTurn("agent", message);
             }
           },
+          onAgentToolRequest: (r) => dlog(`SDK: tool request ${r?.tool_name}`),
           onAgentToolResponse: (r) => {
+            dlog(`SDK: tool response ${r?.tool_name} (${r?.tool_type}, error=${r?.is_error})`);
             if (r?.tool_name === "end_call") signal((t) => t.ended("jordan"));
           },
           onDisconnect: (details) => {
-            dlog(`SDK: disconnected (${details?.reason ?? "unknown"})`);
-            if (details?.reason === "error") signal((t) => t.ended("connection_lost"));
-            if (details?.reason === "agent" && details.context?.type === "end_call") {
-              signal((t) => t.ended("jordan"));
-            }
+            // Raw details for the ?debug=1 log: reason, close code and the
+            // server's close reason. No conversation content.
+            dlog(`SDK: disconnected ${JSON.stringify(details ?? null)}`);
+            signal((t) => t.ended(endReasonFromDisconnect(details)));
             void finalizeCall();
           },
           onError: (msg) => {

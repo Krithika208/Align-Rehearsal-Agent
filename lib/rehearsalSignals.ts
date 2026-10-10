@@ -132,6 +132,30 @@ export function createSignalTracker() {
 
 export type SignalTracker = ReturnType<typeof createSignalTracker>;
 
+// What ended the call, from the SDK's disconnect details. Read from
+// @elevenlabs/client 1.26.0 (BaseConversation.js, WebSocketConnection.js):
+// - reason "agent": the ElevenLabs side ended the call normally. Either the
+//   SDK saw Jordan's end_call tool (context.type "end_call"), or the server
+//   closed the connection cleanly (code 1000). The tool event is an ElevenLabs
+//   "client event" that is only sent if enabled on the agent, so on real calls
+//   Jordan's end_call most likely shows up as the clean close (a real call on
+//   9 October 2026 ended this way and was wrongly saved as "unknown"). Both
+//   mean the ElevenLabs side ended the call normally: recorded as "jordan".
+// - reason "error" with context "max_duration_exceeded": ElevenLabs' own
+//   call-length limit. Not a dropped connection, so "unknown".
+// - reason "error" otherwise: dropped connection or server error.
+// - reason "user": the app hung up itself; the caller records why first
+//   ("end_call_now" or "time_limit"), and the first label wins.
+type Disconnect = { reason: string; context?: { type?: string } } | null | undefined;
+
+export function endReasonFromDisconnect(details: Disconnect): EndReason {
+  if (details?.reason === "agent") return "jordan";
+  if (details?.reason === "error") {
+    return details.context?.type === "max_duration_exceeded" ? "unknown" : "connection_lost";
+  }
+  return "unknown";
+}
+
 // Server side: accept exactly these fields, with allowed labels and sensible
 // numbers. Anything else returns null and nothing is stored.
 const MAX_SECONDS = 30 * 60; // calls are cut at 20 minutes

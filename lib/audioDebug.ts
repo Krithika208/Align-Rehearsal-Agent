@@ -233,6 +233,13 @@ function install(): void {
         } else if (type === "user_transcript") {
           const text = (m.user_transcription_event as { user_transcript?: string })?.user_transcript ?? "";
           dlog(`network: user transcript "${text.slice(0, 40)}"`);
+        } else if (type === "agent_tool_request" || type === "agent_tool_response" || type === "agent_tool_response_full_payload" || type === "client_tool_call") {
+          // Each event's details sit under a key named after the event.
+          const t = (m[type] ?? {}) as { tool_name?: string; tool_type?: string; is_error?: boolean };
+          dlog(`network: ${type} (tool ${t.tool_name ?? "?"}${t.tool_type ? `, ${t.tool_type}` : ""}${t.is_error ? ", error" : ""})`);
+        } else if (type === "error") {
+          const e = (m.error_event ?? {}) as { error_type?: string; code?: number };
+          dlog(`network: ERROR EVENT (${e.error_type ?? "no type"}${e.code ? `, code ${e.code}` : ""})`);
         } else if (type === "interruption") {
           dlog(`network: INTERRUPTION (event ${(m.interruption_event as { event_id?: number })?.event_id})`);
         } else {
