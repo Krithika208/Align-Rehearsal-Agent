@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import CookieBanner from "@/components/CookieBanner";
 import AnalyticsLoader from "@/components/AnalyticsLoader";
+import PostHogLoader from "@/components/PostHogLoader";
 
 export const metadata: Metadata = {
   title: "Align — Rehearse Any Workplace Conversation",
@@ -32,6 +33,7 @@ export default function RootLayout({
         {children}
         <CookieBanner />
         <AnalyticsLoader />
+        <PostHogLoader />
       </body>
     </html>
   );

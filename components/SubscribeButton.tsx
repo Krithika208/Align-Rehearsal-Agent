@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 
 export default function SubscribeButton({
   label,
@@ -38,6 +39,7 @@ export default function SubscribeButton({
       }
 
       if (data.url) {
+        track("checkout_started");
         window.location.href = data.url;
       } else {
         setError("Could not start checkout. Please try again.");
