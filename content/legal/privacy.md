@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Effective date: 13 May 2026. Last updated: 4 October 2026.
+Effective date: 13 May 2026. Last updated: 20 October 2026.
 
 ## 1. Who we are
 
@@ -61,7 +61,7 @@ We do not sell your personal data. We do not use your rehearsal transcripts to t
 
 Essential cookies keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
 
-Analytics cookies help us understand how Align is used so we can improve it. We use Google Analytics 4 (provided by Google LLC, United States). It records things like pages viewed, approximate location, device type, and overall usage patterns.
+Analytics cookies help us understand how Align is used so we can improve it. We use Google Analytics 4 (provided by Google LLC, United States) and PostHog (provided by PostHog, Inc., United States). They record things like pages viewed, approximate location, device type, overall usage patterns, and how you move through the site, with all text you type or see masked.
 
 Analytics only runs if you agree to it. When you first visit, a banner asks you to choose:
 

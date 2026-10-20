@@ -50,7 +50,7 @@ function normalise(text: string): string {
   return text.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ");
 }
 
-function deviceClass(): DeviceClass {
+export function deviceClass(): DeviceClass {
   const ua = navigator.userAgent;
   const iPadAsMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
   return /Mobi|Android|iPhone|iPad|iPod/i.test(ua) || iPadAsMac ? "mobile" : "desktop";
@@ -81,21 +81,22 @@ export function createSignalTracker() {
       userTurns++;
       lastUserTurnAskedForDebrief = USER_ASKED_FOR_DEBRIEF.test(text);
     },
-    // Something Jordan said.
-    jordanTurn(text: string) {
+    // Something Jordan said. Returns true when this line starts the debrief.
+    jordanTurn(text: string): boolean {
       const t = normalise(text);
       if (t.includes(JORDAN_PHRASES.teaching)) {
         // The "I'm stuck" button already counted this one.
         if (stuckPending) stuckPending = false;
         else stuck++;
       }
-      if (debriefAt !== null) return;
+      if (debriefAt !== null) return false;
       if (t.includes(JORDAN_PHRASES.debrief)) {
         debriefAt = performance.now();
         trigger = wrapRequest ?? (lastUserTurnAskedForDebrief ? "user_asked" : "jordan");
-        return;
+        return true;
       }
       jordanTurns++;
+      return false;
     },
     wrapButton() {
       if (!wrapRequest) wrapRequest = "button";

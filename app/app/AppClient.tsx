@@ -8,8 +8,10 @@ import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
 import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
+import { track } from "@/lib/analytics";
 import {
   createSignalTracker,
+  deviceClass,
   endReasonFromDisconnect,
   type SignalTracker,
 } from "@/lib/rehearsalSignals";
@@ -102,6 +104,7 @@ export default function AppClient({
     setScenario(s);
     setStep("setup");
     setError(null);
+    track("rehearsal_setup_viewed");
   };
 
   const backToPicker = () => {
@@ -196,7 +199,15 @@ export default function AppClient({
               signal((t) => t.userTurn(message));
               appendTurn("user", message);
             } else if (source === "ai") {
-              signal((t) => t.jordanTurn(message));
+              signal((t) => {
+                if (t.jordanTurn(message)) {
+                  const s = t.snapshot();
+                  track("debrief_started", {
+                    debrief_trigger: s.debrief_trigger,
+                    seconds_in: s.debrief_started_seconds,
+                  });
+                }
+              });
               appendTurn("agent", message);
             }
           },
@@ -219,6 +230,11 @@ export default function AppClient({
           onConnect: () => {
             dlog("SDK: connected");
             signal((t) => t.connected());
+            track("rehearsal_started", {
+              scenario_slug: scenario.slug,
+              relationship,
+              device_class: deviceClass(),
+            });
           },
           onStatusChange: ({ status }) => dlog(`SDK: status ${status}`),
           onAudio: () => {
@@ -284,8 +300,9 @@ export default function AppClient({
       /* the rehearsal still saves */
     }
     signalsRef.current = null;
+    let durationSeconds: number | null = null;
     try {
-      await fetch("/api/elevenlabs/end-conversation", {
+      const res = await fetch("/api/elevenlabs/end-conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -295,9 +312,15 @@ export default function AppClient({
           signals,
         }),
       });
+      const saved = (await res.json().catch(() => null)) as { duration_seconds?: unknown } | null;
+      if (typeof saved?.duration_seconds === "number") durationSeconds = saved.duration_seconds;
     } catch {
       /* best-effort */
     }
+    track("rehearsal_ended", {
+      ended_by: (signals as { ended_by?: string } | null)?.ended_by ?? "unknown",
+      duration_seconds: durationSeconds,
+    });
     setLastConversationId(active.dbId);
     setStep("complete");
   }, []);
@@ -369,6 +392,7 @@ export default function AppClient({
     try {
       active.conversation.sendUserMessage(teachingSignal);
       signal((t) => t.stuckButton());
+      track("stuck_pressed");
       setTeachingDisabled(true);
       setTimeout(() => setTeachingDisabled(false), 5000);
     } catch (err) {

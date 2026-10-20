@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import SignupForm from "./SignupForm";
+import TrackOnMount from "@/components/TrackOnMount";
 
 export const metadata = {
   title: "Sign up — Align",
@@ -74,6 +75,7 @@ export default async function SignupPage({
             <Link href="/" className="auth-logo">
               align<span>.</span>
             </Link>
+            <TrackOnMount event="signup_completed" />
             <h1 className="auth-heading">Check your email</h1>
             <p className="auth-sub">
               We sent a confirmation link. Click it to activate your account, then

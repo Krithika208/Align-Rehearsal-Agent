@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
+import { track } from "@/lib/analytics";
 
 // Lives inside the form so it can see when the request is in flight.
 function SubmitButton() {
@@ -31,7 +32,9 @@ export default function SignupForm({
       e.preventDefault();
       setAgeError(true);
       box?.focus();
+      return;
     }
+    track("signup_started");
   }
 
   return (
