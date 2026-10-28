@@ -26,6 +26,8 @@ const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 // The library itself is only downloaded after consent.
 let client: PostHog | null = null;
 let loading: Promise<PostHog | null> | null = null;
+// True after consent is withdrawn while PostHog was running.
+let withdrawn = false;
 
 const URL_PROPS = ["$current_url", "$referrer", "$initial_referrer", "$initial_current_url"];
 
@@ -55,19 +57,27 @@ function maskAttribute(name: string, value: string): string {
   return WORD_ATTRIBUTES.has(name.toLowerCase()) ? value.replace(/\S/g, "*") : value;
 }
 
-// Page addresses inside a recording (rrweb "meta" events), without their
-// query string, like event URLs.
+// Page addresses inside a recording, without their query string, like event
+// URLs: full page loads (rrweb "meta" events, data.href) and in-app moves and
+// other custom events such as $url_changed (data.payload.href / .url).
 function scrubSnapshot(data: unknown): void {
+  type Payload = Record<string, unknown>;
   for (const item of Array.isArray(data) ? data : [data]) {
-    const d = (item as { type?: number; data?: { href?: unknown } } | null)?.data;
-    if ((item as { type?: number })?.type === 4 && d && typeof d.href === "string") {
-      d.href = stripQuery(d.href);
+    const d = (item as { data?: Payload } | null)?.data;
+    if (!d || typeof d !== "object") continue;
+    for (const target of [d, d.payload as Payload | undefined]) {
+      if (!target || typeof target !== "object") continue;
+      for (const key of ["href", "url"]) {
+        if (typeof target[key] === "string") target[key] = stripQuery(target[key]);
+      }
     }
   }
 }
 
 function beforeSend(event: CaptureResult | null): CaptureResult | null {
-  if (!event) return event;
+  // Consent is checked on every event, so anything captured after "Essential
+  // only" (such as the recorder's final flush) is dropped, never sent.
+  if (!event || !hasAnalyticsConsent()) return null;
   if (event.properties) {
     // The page title is words; the path already says which page it was.
     delete event.properties.title;
@@ -89,6 +99,11 @@ function init(posthog: PostHog): PostHog {
   posthog.init(KEY!, {
     api_host: HOST,
     person_profiles: "identified_only",
+    // Send each event as it is captured instead of batching every few
+    // seconds, so nothing sits in a queue when consent is withdrawn.
+    request_batching: false,
+    // Opting out also removes PostHog's cookie and storage.
+    opt_out_persistence_by_default: true,
     // Page views are sent by components/PostHogLoader.tsx on each route.
     capture_pageview: false,
     capture_pageleave: false,
@@ -130,8 +145,15 @@ function load(): Promise<PostHog | null> {
       });
   }
   return loading.then((ph) => {
+    // Consent withdrawn while the library was still downloading.
+    if (ph && !hasAnalyticsConsent()) {
+      stopAnalytics();
+      return null;
+    }
     // Consent given again after being withdrawn.
-    if (ph?.has_opted_out_capturing()) {
+    if (ph && withdrawn) {
+      withdrawn = false;
+      ph.__loaded = true;
       ph.opt_in_capturing();
       ph.startSessionRecording();
     }
@@ -139,20 +161,52 @@ function load(): Promise<PostHog | null> {
   });
 }
 
+// Removes every PostHog cookie and storage key ("ph_..." and its opt-out flag
+// "__ph_opt_in_out_..."). Also clears leftovers from an earlier visit.
+function removePostHogStorage(): void {
+  const isPostHog = (name: string) => name.startsWith("ph_") || name.startsWith("__ph_");
+  try {
+    const host = window.location.hostname;
+    const domains = ["", host, `.${host}`, `.${host.split(".").slice(-2).join(".")}`];
+    for (const cookie of document.cookie.split(";")) {
+      const name = cookie.split("=")[0].trim();
+      if (!isPostHog(name)) continue;
+      for (const domain of domains) {
+        document.cookie = `${name}=; Max-Age=0; path=/${domain ? `; domain=${domain}` : ""}`;
+      }
+    }
+    for (const store of [window.localStorage, window.sessionStorage]) {
+      for (const key of Object.keys(store)) if (isPostHog(key)) store.removeItem(key);
+    }
+  } catch {
+    /* storage blocked: nothing to remove */
+  }
+}
+
 export function startAnalytics(): void {
   void load();
 }
 
-// Consent withdrawn ("Essential only" or "Cookie preferences"): stop at once.
+// No consent, or consent withdrawn ("Essential only" or "Cookie
+// preferences"): stop at once, send nothing more, and remove PostHog's cookie
+// and storage.
 export function stopAnalytics(): void {
-  if (!client) return;
-  try {
-    client.stopSessionRecording();
-    client.opt_out_capturing();
-    client.reset();
-  } catch {
-    /* ignore */
+  if (client && !withdrawn) {
+    withdrawn = true;
+    try {
+      client.stopSessionRecording();
+      // reset() before opting out: in posthog-js reset() clears a stored
+      // opt-out ("prefer calling reset() before opting in rather than after").
+      client.reset();
+      client.opt_out_capturing();
+      // Every send path (direct sends, retries, the page-close beacon) checks
+      // __loaded, so nothing already on its way out is sent.
+      client.__loaded = false;
+    } catch {
+      /* ignore */
+    }
   }
+  removePostHogStorage();
 }
 
 // Labels and numbers only. Never pass free text.
