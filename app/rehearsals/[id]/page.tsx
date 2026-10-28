@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import HeaderMenu from "@/components/HeaderMenu";
+import { CoachingNotesSection } from "@/components/CoachingNotes";
 import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
 import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
@@ -29,7 +30,7 @@ function formatDate(iso: string | null): string {
   return `${day} ${month}, ${time}`;
 }
 
-type TranscriptTurn = { role: "user" | "agent"; text: string };
+type TranscriptTurn = { role: "user" | "agent"; text: string; seconds: number | null };
 
 function normalizeTranscript(raw: unknown): TranscriptTurn[] {
   if (!Array.isArray(raw)) return [];
@@ -42,7 +43,9 @@ function normalizeTranscript(raw: unknown): TranscriptTurn[] {
     const message = typeof rec.message === "string" ? rec.message : "";
     const trimmed = message.trim();
     if (!trimmed) continue;
-    turns.push({ role, text: trimmed });
+    // Seconds into the call; missing on rehearsals saved before coaching notes.
+    const seconds = typeof rec.seconds === "number" ? rec.seconds : null;
+    turns.push({ role, text: trimmed, seconds });
   }
   return turns;
 }
@@ -148,6 +151,8 @@ export default async function RehearsalDetailPage({
             <p>{situation}</p>
           </div>
         )}
+
+        <CoachingNotesSection turns={turns} />
 
         <div className="transcript-panel rehearsal-transcript">
           <div className="transcript-label">Transcript</div>

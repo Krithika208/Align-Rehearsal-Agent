@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
+import { CoachingNotesSection, LiveCoachingNotes } from "@/components/CoachingNotes";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
 import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
@@ -31,6 +32,8 @@ type TranscriptTurn = {
   id: number;
   role: "user" | "agent";
   text: string;
+  // Seconds since the call connected, for the coaching notes' time stamps.
+  seconds: number;
 };
 
 // App-signalled session timing. The agent can't time itself, so the app sends
@@ -78,6 +81,7 @@ export default function AppClient({
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
   const transcriptRef = useRef<TranscriptTurn[]>([]);
+  const connectedAtRef = useRef(0);
   const wrappingUpRef = useRef(false);
   const stopTimerRef = useRef<(() => void) | null>(null);
   // How the rehearsal unfolds and ends, as numbers and labels only (see
@@ -95,7 +99,8 @@ export default function AppClient({
     const trimmed = text?.trim();
     if (!trimmed) return;
     turnIdRef.current += 1;
-    const turn = { id: turnIdRef.current, role, text: trimmed };
+    const seconds = Math.max(0, Math.round((performance.now() - connectedAtRef.current) / 1000));
+    const turn = { id: turnIdRef.current, role, text: trimmed, seconds };
     transcriptRef.current = [...transcriptRef.current, turn];
     setTranscript(transcriptRef.current);
   }, []);
@@ -126,6 +131,7 @@ export default function AppClient({
     setWrappingUp(false);
     wrappingUpRef.current = false;
     turnIdRef.current = 0;
+    connectedAtRef.current = performance.now();
     try {
       // Sort out the mic before the server counts this rehearsal.
       let micId: string | null;
@@ -229,6 +235,7 @@ export default function AppClient({
           },
           onConnect: () => {
             dlog("SDK: connected");
+            connectedAtRef.current = performance.now();
             signal((t) => t.connected());
             track("rehearsal_started", {
               scenario_slug: scenario.slug,
@@ -292,6 +299,7 @@ export default function AppClient({
     const transcriptPayload = transcriptRef.current.map((t) => ({
       source: t.role === "agent" ? "ai" : "user",
       message: t.text,
+      seconds: t.seconds,
     }));
     let signals: unknown = null;
     try {
@@ -471,6 +479,7 @@ export default function AppClient({
       <CompleteScreen
         foundingPerk={foundingPerk}
         conversationId={lastConversationId}
+        transcript={transcript}
         onAnother={backToPicker}
         onDone={() => {
           setScenario(null);
@@ -828,6 +837,8 @@ function CallScreen({
         </button>
       </div>
 
+      <div className="call-columns">
+      <LiveCoachingNotes turns={transcript} />
       <div className="transcript-panel" aria-live="polite">
         <div className="transcript-label">Live transcript</div>
         <div className="transcript-scroll" ref={scrollRef}>
@@ -850,6 +861,7 @@ function CallScreen({
           )}
         </div>
       </div>
+      </div>
     </main>
   );
 }
@@ -857,11 +869,13 @@ function CallScreen({
 function CompleteScreen({
   foundingPerk,
   conversationId,
+  transcript,
   onAnother,
   onDone,
 }: {
   foundingPerk: FoundingPerk | null;
   conversationId: string | null;
+  transcript: TranscriptTurn[];
   onAnother: () => void;
   onDone: () => void;
 }) {
@@ -874,6 +888,7 @@ function CompleteScreen({
           That&apos;s the practice rep done. Want to go again, or save it for
           later?
         </p>
+        <CoachingNotesSection turns={transcript} />
         {conversationId && <OutcomeCard rehearsalId={conversationId} />}
         {foundingPerk && !foundingPerk.claimed && (
           <FoundingPerkCard perk={foundingPerk} variant="debrief" />

@@ -10,6 +10,8 @@ export const JORDAN_PHRASES = {
   debrief: "stepping out of character",
   // Teaching mode ("I'm stuck"). Not the debrief.
   teaching: "stepping out for a moment",
+  // End of a teaching-mode tip ("Want me to pick up where we left off?").
+  teachingEnd: "pick up where we left off",
 } as const;
 
 // A user turn with these words, just before the debrief, counts as asking for it.
@@ -46,7 +48,7 @@ const KEYS: (keyof RehearsalSignals)[] = [
 ];
 
 // Lower case, straight apostrophes, single spaces.
-function normalise(text: string): string {
+export function normalise(text: string): string {
   return text.toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ");
 }
 
