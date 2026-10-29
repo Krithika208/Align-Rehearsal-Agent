@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { coachingNotes, formatClock, type CoachingNote, type NoteTurn } from "@/lib/coachingNotes";
+import { formatClock, noteParts, type CoachingNote } from "@/lib/coachingNotes";
 
 const EMPTY_TEXT =
   "Jordan's tips will appear here. Say 'I'm stuck' or press the button any time.";
@@ -9,27 +9,37 @@ const EMPTY_TEXT =
 function NoteList({ notes }: { notes: CoachingNote[] }) {
   return (
     <>
-      {notes.map((note, i) => (
-        <div key={i} className={`coach-note coach-note-${note.kind}`}>
-          {(note.label || note.seconds !== null) && (
-            <div className="coach-note-meta">
-              {note.label && <span className="coach-note-label">{note.label}</span>}
-              {note.seconds !== null && (
-                <span className="coach-note-time">{formatClock(note.seconds)}</span>
-              )}
+      {notes.map((note, i) => {
+        const { heading, blocks } = noteParts(note.text);
+        return (
+          <div key={i} className="coach-note">
+            <div className="coach-note-head">
+              <span className="coach-note-heading">{heading}</span>
+              <span className="coach-note-time">{formatClock(note.seconds)}</span>
             </div>
-          )}
-          <div className="coach-note-text">{note.text}</div>
-        </div>
-      ))}
+            {blocks.map((b, j) =>
+              b.kind === "bullets" ? (
+                <ul key={j} className="coach-note-bullets">
+                  {b.items.map((item, k) => (
+                    <li key={k}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p key={j} className="coach-note-text">
+                  {b.text}
+                </p>
+              )
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }
 
 // Call screen: a right-hand panel on laptops, a strip above the transcript on
 // phones (CSS picks one at 800px).
-export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
-  const notes = coachingNotes(turns);
+export function LiveCoachingNotes({ notes }: { notes: CoachingNote[] }) {
   const [expanded, setExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -40,9 +50,7 @@ export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
     }
   }, [notes.length, expanded]);
 
-  // The latest tip (or the debrief so far): every line since its label.
-  const latestStart = notes.map((n) => n.label !== null).lastIndexOf(true);
-  const latest = notes.slice(Math.max(0, latestStart));
+  const latest = notes[notes.length - 1];
 
   return (
     <>
@@ -58,7 +66,7 @@ export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
       </aside>
 
       <section className="coach-strip" aria-label="Coaching notes">
-        {notes.length === 0 ? (
+        {!latest ? (
           <>
             <div className="transcript-label coach-strip-label">Coaching notes</div>
             <div className="coach-strip-empty">{EMPTY_TEXT}</div>
@@ -71,9 +79,7 @@ export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
               aria-expanded={expanded}
               onClick={() => setExpanded((e) => !e)}
             >
-              <span className="transcript-label coach-strip-label">
-                Coaching notes
-              </span>
+              <span className="transcript-label coach-strip-label">Coaching notes</span>
               <span className="coach-strip-action">{expanded ? "Show less" : "Show all"}</span>
             </button>
             {expanded ? (
@@ -86,13 +92,10 @@ export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
                 className="coach-strip-latest"
                 onClick={() => setExpanded(true)}
               >
-                <span className="coach-note-meta">
-                  {latest[0].label && <span className="coach-note-label">{latest[0].label}</span>}
-                  {latest[0].seconds !== null && (
-                    <span className="coach-note-time">{formatClock(latest[0].seconds)}</span>
-                  )}
+                <span className="coach-note-heading coach-strip-text">
+                  {noteParts(latest.text).heading}
                 </span>
-                <span className="coach-strip-text">{latest.map((n) => n.text).join(" ")}</span>
+                <span className="coach-note-time">{formatClock(latest.seconds)}</span>
               </button>
             )}
           </>
@@ -103,8 +106,7 @@ export function LiveCoachingNotes({ turns }: { turns: NoteTurn[] }) {
 }
 
 // Complete screen and saved rehearsal page. Nothing shows without any notes.
-export function CoachingNotesSection({ turns }: { turns: NoteTurn[] }) {
-  const notes = coachingNotes(turns);
+export function CoachingNotesSection({ notes }: { notes: CoachingNote[] }) {
   if (notes.length === 0) return null;
   return (
     <section className="transcript-panel coach-section" aria-label="Coaching notes">

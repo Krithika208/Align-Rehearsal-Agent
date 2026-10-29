@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { encryptTranscript, toBytea } from "@/lib/encryption";
+import { parseNotes } from "@/lib/coachingNotes";
 import { parseSignals } from "@/lib/rehearsalSignals";
 
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     conversation_db_id?: string;
     el_conversation_id?: string | null;
     transcript?: unknown;
+    notes?: unknown;
     signals?: unknown;
   };
   try {
@@ -64,8 +66,12 @@ export async function POST(req: Request) {
   // Encrypted before it leaves the server; never stored as plaintext. If the
   // key is missing this fails loudly and the transcript is not saved.
   if (Array.isArray(body.transcript)) {
+    // Jordan's coaching notes are saved with the transcript, in the same
+    // encrypted content. Malformed notes are dropped; the transcript still saves.
+    const notes = body.notes == null ? [] : parseNotes(body.notes);
+    if (!notes) console.error("[end-conversation] rejected coaching notes");
     try {
-      const enc = encryptTranscript(body.transcript, user.id);
+      const enc = encryptTranscript({ transcript: body.transcript, notes: notes ?? [] }, user.id);
       update.encrypted_content = toBytea(enc.ciphertext);
       update.encryption_iv = toBytea(enc.iv);
       update.encrypted_key = toBytea(enc.wrappedKey);

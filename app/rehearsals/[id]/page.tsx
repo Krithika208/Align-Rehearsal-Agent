@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import HeaderMenu from "@/components/HeaderMenu";
 import { CoachingNotesSection } from "@/components/CoachingNotes";
+import { readSavedContent } from "@/lib/coachingNotes";
 import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
 import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
@@ -30,7 +31,7 @@ function formatDate(iso: string | null): string {
   return `${day} ${month}, ${time}`;
 }
 
-type TranscriptTurn = { role: "user" | "agent"; text: string; seconds: number | null };
+type TranscriptTurn = { role: "user" | "agent"; text: string };
 
 function normalizeTranscript(raw: unknown): TranscriptTurn[] {
   if (!Array.isArray(raw)) return [];
@@ -43,9 +44,7 @@ function normalizeTranscript(raw: unknown): TranscriptTurn[] {
     const message = typeof rec.message === "string" ? rec.message : "";
     const trimmed = message.trim();
     if (!trimmed) continue;
-    // Seconds into the call; missing on rehearsals saved before coaching notes.
-    const seconds = typeof rec.seconds === "number" ? rec.seconds : null;
-    turns.push({ role, text: trimmed, seconds });
+    turns.push({ role, text: trimmed });
   }
   return turns;
 }
@@ -93,19 +92,21 @@ export default async function RehearsalDetailPage({
           "situation"
         )
       : null;
-  const turns =
+  // Older rehearsals saved the transcript alone; newer ones also hold
+  // Jordan's coaching notes (lib/coachingNotes.ts).
+  const content = readSavedContent(
     row.encrypted_content && row.encryption_iv && row.encrypted_key
-      ? normalizeTranscript(
-          decryptTranscript(
-            {
-              ciphertext: fromBytea(row.encrypted_content),
-              iv: fromBytea(row.encryption_iv),
-              wrappedKey: fromBytea(row.encrypted_key),
-            },
-            user.id
-          )
+      ? decryptTranscript(
+          {
+            ciphertext: fromBytea(row.encrypted_content),
+            iv: fromBytea(row.encryption_iv),
+            wrappedKey: fromBytea(row.encrypted_key),
+          },
+          user.id
         )
-      : [];
+      : []
+  );
+  const turns = normalizeTranscript(content.transcript);
 
   return (
     <>
@@ -152,7 +153,7 @@ export default async function RehearsalDetailPage({
           </div>
         )}
 
-        <CoachingNotesSection turns={turns} />
+        <CoachingNotesSection notes={content.notes} />
 
         <div className="transcript-panel rehearsal-transcript">
           <div className="transcript-label">Transcript</div>

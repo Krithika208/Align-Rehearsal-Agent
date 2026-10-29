@@ -16,6 +16,7 @@ import {
   endReasonFromDisconnect,
   type SignalTracker,
 } from "@/lib/rehearsalSignals";
+import { cleanNote, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -32,8 +33,6 @@ type TranscriptTurn = {
   id: number;
   role: "user" | "agent";
   text: string;
-  // Seconds since the call connected, for the coaching notes' time stamps.
-  seconds: number;
 };
 
 // App-signalled session timing. The agent can't time itself, so the app sends
@@ -77,10 +76,14 @@ export default function AppClient({
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
   const [soundBlocked, setSoundBlocked] = useState(false);
+  const [notes, setNotes] = useState<CoachingNote[]>([]);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
   const transcriptRef = useRef<TranscriptTurn[]>([]);
+  // Coaching notes Jordan sends with the show_note tool, time-stamped from
+  // the moment the call connected.
+  const notesRef = useRef<CoachingNote[]>([]);
   const connectedAtRef = useRef(0);
   const wrappingUpRef = useRef(false);
   const stopTimerRef = useRef<(() => void) | null>(null);
@@ -99,8 +102,7 @@ export default function AppClient({
     const trimmed = text?.trim();
     if (!trimmed) return;
     turnIdRef.current += 1;
-    const seconds = Math.max(0, Math.round((performance.now() - connectedAtRef.current) / 1000));
-    const turn = { id: turnIdRef.current, role, text: trimmed, seconds };
+    const turn = { id: turnIdRef.current, role, text: trimmed };
     transcriptRef.current = [...transcriptRef.current, turn];
     setTranscript(transcriptRef.current);
   }, []);
@@ -131,6 +133,8 @@ export default function AppClient({
     setWrappingUp(false);
     wrappingUpRef.current = false;
     turnIdRef.current = 0;
+    notesRef.current = [];
+    setNotes([]);
     connectedAtRef.current = performance.now();
     try {
       // Sort out the mic before the server counts this rehearsal.
@@ -217,6 +221,25 @@ export default function AppClient({
               appendTurn("agent", message);
             }
           },
+          // Jordan's written coaching notes (see lib/coachingNotes.ts). Never
+          // throws: a bad note is ignored and the call carries on.
+          clientTools: {
+            [NOTE_TOOL]: (params: unknown) => {
+              const note = cleanNote((params as { note?: unknown } | null)?.note);
+              dlog(`SDK: ${NOTE_TOOL} ${note ? "shown" : "ignored"}`);
+              if (!note) return "ignored";
+              const seconds = Math.max(
+                0,
+                Math.round((performance.now() - connectedAtRef.current) / 1000)
+              );
+              notesRef.current = [...notesRef.current, { seconds, text: note }];
+              setNotes(notesRef.current);
+              return "shown";
+            },
+          },
+          // Any other client tool the agent calls: log it and carry on, rather
+          // than show an error.
+          onUnhandledClientToolCall: (c) => dlog(`SDK: unknown client tool ${c?.tool_name}`),
           onAgentToolRequest: (r) => dlog(`SDK: tool request ${r?.tool_name}`),
           onAgentToolResponse: (r) => {
             dlog(`SDK: tool response ${r?.tool_name} (${r?.tool_type}, error=${r?.is_error})`);
@@ -299,7 +322,6 @@ export default function AppClient({
     const transcriptPayload = transcriptRef.current.map((t) => ({
       source: t.role === "agent" ? "ai" : "user",
       message: t.text,
-      seconds: t.seconds,
     }));
     let signals: unknown = null;
     try {
@@ -317,6 +339,7 @@ export default function AppClient({
           conversation_db_id: active.dbId,
           el_conversation_id: elId,
           transcript: transcriptPayload,
+          notes: notesRef.current,
           signals,
         }),
       });
@@ -455,6 +478,7 @@ export default function AppClient({
       <CallScreen
         mode={mode}
         transcript={transcript}
+        notes={notes}
         wrappingUp={wrappingUp}
         teachingDisabled={teachingDisabled}
         onTeachingMode={requestTeachingMode}
@@ -479,7 +503,7 @@ export default function AppClient({
       <CompleteScreen
         foundingPerk={foundingPerk}
         conversationId={lastConversationId}
-        transcript={transcript}
+        notes={notes}
         onAnother={backToPicker}
         onDone={() => {
           setScenario(null);
@@ -741,6 +765,7 @@ function SetupScreen({
 function CallScreen({
   mode,
   transcript,
+  notes,
   wrappingUp,
   teachingDisabled,
   onTeachingMode,
@@ -751,6 +776,7 @@ function CallScreen({
 }: {
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
+  notes: CoachingNote[];
   wrappingUp: boolean;
   teachingDisabled: boolean;
   onTeachingMode: () => void;
@@ -838,7 +864,7 @@ function CallScreen({
       </div>
 
       <div className="call-columns">
-      <LiveCoachingNotes turns={transcript} />
+      <LiveCoachingNotes notes={notes} />
       <div className="transcript-panel" aria-live="polite">
         <div className="transcript-label">Live transcript</div>
         <div className="transcript-scroll" ref={scrollRef}>
@@ -869,13 +895,13 @@ function CallScreen({
 function CompleteScreen({
   foundingPerk,
   conversationId,
-  transcript,
+  notes,
   onAnother,
   onDone,
 }: {
   foundingPerk: FoundingPerk | null;
   conversationId: string | null;
-  transcript: TranscriptTurn[];
+  notes: CoachingNote[];
   onAnother: () => void;
   onDone: () => void;
 }) {
@@ -888,7 +914,7 @@ function CompleteScreen({
           That&apos;s the practice rep done. Want to go again, or save it for
           later?
         </p>
-        <CoachingNotesSection turns={transcript} />
+        <CoachingNotesSection notes={notes} />
         {conversationId && <OutcomeCard rehearsalId={conversationId} />}
         {foundingPerk && !foundingPerk.claimed && (
           <FoundingPerkCard perk={foundingPerk} variant="debrief" />
