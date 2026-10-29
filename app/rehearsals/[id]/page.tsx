@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import HeaderMenu from "@/components/HeaderMenu";
+import { CoachingNotesSection } from "@/components/CoachingNotes";
+import { readSavedContent } from "@/lib/coachingNotes";
 import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
 import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
 
@@ -90,19 +92,21 @@ export default async function RehearsalDetailPage({
           "situation"
         )
       : null;
-  const turns =
+  // Older rehearsals saved the transcript alone; newer ones also hold
+  // Jordan's coaching notes (lib/coachingNotes.ts).
+  const content = readSavedContent(
     row.encrypted_content && row.encryption_iv && row.encrypted_key
-      ? normalizeTranscript(
-          decryptTranscript(
-            {
-              ciphertext: fromBytea(row.encrypted_content),
-              iv: fromBytea(row.encryption_iv),
-              wrappedKey: fromBytea(row.encrypted_key),
-            },
-            user.id
-          )
+      ? decryptTranscript(
+          {
+            ciphertext: fromBytea(row.encrypted_content),
+            iv: fromBytea(row.encryption_iv),
+            wrappedKey: fromBytea(row.encrypted_key),
+          },
+          user.id
         )
-      : [];
+      : []
+  );
+  const turns = normalizeTranscript(content.transcript);
 
   return (
     <>
@@ -148,6 +152,8 @@ export default async function RehearsalDetailPage({
             <p>{situation}</p>
           </div>
         )}
+
+        <CoachingNotesSection notes={content.notes} />
 
         <div className="transcript-panel rehearsal-transcript">
           <div className="transcript-label">Transcript</div>

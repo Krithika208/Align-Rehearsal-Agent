@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
+import { CoachingNotesSection, LiveCoachingNotes } from "@/components/CoachingNotes";
 import FoundingPerkCard from "@/components/FoundingPerkCard";
 import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
@@ -15,6 +16,7 @@ import {
   endReasonFromDisconnect,
   type SignalTracker,
 } from "@/lib/rehearsalSignals";
+import { cleanNote, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -74,10 +76,15 @@ export default function AppClient({
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
   const [soundBlocked, setSoundBlocked] = useState(false);
+  const [notes, setNotes] = useState<CoachingNote[]>([]);
 
   const activeCallRef = useRef<ActiveCall | null>(null);
   const turnIdRef = useRef(0);
   const transcriptRef = useRef<TranscriptTurn[]>([]);
+  // Coaching notes Jordan sends with the show_note tool, time-stamped from
+  // the moment the call connected.
+  const notesRef = useRef<CoachingNote[]>([]);
+  const connectedAtRef = useRef(0);
   const wrappingUpRef = useRef(false);
   const stopTimerRef = useRef<(() => void) | null>(null);
   // How the rehearsal unfolds and ends, as numbers and labels only (see
@@ -126,6 +133,9 @@ export default function AppClient({
     setWrappingUp(false);
     wrappingUpRef.current = false;
     turnIdRef.current = 0;
+    notesRef.current = [];
+    setNotes([]);
+    connectedAtRef.current = performance.now();
     try {
       // Sort out the mic before the server counts this rehearsal.
       let micId: string | null;
@@ -211,6 +221,25 @@ export default function AppClient({
               appendTurn("agent", message);
             }
           },
+          // Jordan's written coaching notes (see lib/coachingNotes.ts). Never
+          // throws: a bad note is ignored and the call carries on.
+          clientTools: {
+            [NOTE_TOOL]: (params: unknown) => {
+              const note = cleanNote((params as { note?: unknown } | null)?.note);
+              dlog(`SDK: ${NOTE_TOOL} ${note ? "shown" : "ignored"}`);
+              if (!note) return "ignored";
+              const seconds = Math.max(
+                0,
+                Math.round((performance.now() - connectedAtRef.current) / 1000)
+              );
+              notesRef.current = [...notesRef.current, { seconds, text: note }];
+              setNotes(notesRef.current);
+              return "shown";
+            },
+          },
+          // Any other client tool the agent calls: log it and carry on, rather
+          // than show an error.
+          onUnhandledClientToolCall: (c) => dlog(`SDK: unknown client tool ${c?.tool_name}`),
           onAgentToolRequest: (r) => dlog(`SDK: tool request ${r?.tool_name}`),
           onAgentToolResponse: (r) => {
             dlog(`SDK: tool response ${r?.tool_name} (${r?.tool_type}, error=${r?.is_error})`);
@@ -229,6 +258,7 @@ export default function AppClient({
           },
           onConnect: () => {
             dlog("SDK: connected");
+            connectedAtRef.current = performance.now();
             signal((t) => t.connected());
             track("rehearsal_started", {
               scenario_slug: scenario.slug,
@@ -309,6 +339,7 @@ export default function AppClient({
           conversation_db_id: active.dbId,
           el_conversation_id: elId,
           transcript: transcriptPayload,
+          notes: notesRef.current,
           signals,
         }),
       });
@@ -447,6 +478,7 @@ export default function AppClient({
       <CallScreen
         mode={mode}
         transcript={transcript}
+        notes={notes}
         wrappingUp={wrappingUp}
         teachingDisabled={teachingDisabled}
         onTeachingMode={requestTeachingMode}
@@ -471,6 +503,7 @@ export default function AppClient({
       <CompleteScreen
         foundingPerk={foundingPerk}
         conversationId={lastConversationId}
+        notes={notes}
         onAnother={backToPicker}
         onDone={() => {
           setScenario(null);
@@ -732,6 +765,7 @@ function SetupScreen({
 function CallScreen({
   mode,
   transcript,
+  notes,
   wrappingUp,
   teachingDisabled,
   onTeachingMode,
@@ -742,6 +776,7 @@ function CallScreen({
 }: {
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
+  notes: CoachingNote[];
   wrappingUp: boolean;
   teachingDisabled: boolean;
   onTeachingMode: () => void;
@@ -828,6 +863,8 @@ function CallScreen({
         </button>
       </div>
 
+      <div className="call-columns">
+      <LiveCoachingNotes notes={notes} />
       <div className="transcript-panel" aria-live="polite">
         <div className="transcript-label">Live transcript</div>
         <div className="transcript-scroll" ref={scrollRef}>
@@ -850,6 +887,7 @@ function CallScreen({
           )}
         </div>
       </div>
+      </div>
     </main>
   );
 }
@@ -857,11 +895,13 @@ function CallScreen({
 function CompleteScreen({
   foundingPerk,
   conversationId,
+  notes,
   onAnother,
   onDone,
 }: {
   foundingPerk: FoundingPerk | null;
   conversationId: string | null;
+  notes: CoachingNote[];
   onAnother: () => void;
   onDone: () => void;
 }) {
@@ -874,6 +914,7 @@ function CompleteScreen({
           That&apos;s the practice rep done. Want to go again, or save it for
           later?
         </p>
+        <CoachingNotesSection notes={notes} />
         {conversationId && <OutcomeCard rehearsalId={conversationId} />}
         {foundingPerk && !foundingPerk.claimed && (
           <FoundingPerkCard perk={foundingPerk} variant="debrief" />
