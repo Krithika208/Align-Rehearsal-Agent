@@ -616,15 +616,24 @@ footer a:hover { text-decoration: underline; }
   color: #8a3a2e;
 }
 
-.setup-cap-note {
-  display: block;
+.setup-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
   margin-top: 0.6rem;
-  text-align: center;
+  padding: 0.65rem 0.85rem;
+  background: var(--teal-glow);
+  border: 1px solid rgba(42, 127, 142, 0.25);
+  border-radius: 8px;
+  color: var(--navy);
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
-
-.setup-privacy-note {
-  display: block;
-  margin-top: 0.5rem;
+.setup-privacy strong { font-weight: 600; }
+.lock-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--teal);
 }
 
 .auth-notice {
@@ -1046,7 +1055,19 @@ footer a:hover { text-decoration: underline; }
   font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-bottom: 1.75rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Elapsed time: one muted style for the whole call, never a countdown. */
+.call-clock {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 1.4rem;
 }
 
 .btn-teaching-mode {
@@ -1319,15 +1340,31 @@ footer a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: 0.5rem;
 }
+/* Privacy line on the call screen: under the coaching strip on phones,
+   under the transcript on laptops. In the page flow, never over the buttons. */
+.call-privacy {
+  order: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.call-privacy .lock-icon { width: 14px; height: 14px; }
+.call-transcript { order: 2; }
 /* Laptop: notes beside the transcript, about a third of the width. */
 @media (min-width: 801px) {
   .call-columns {
     max-width: 960px;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: flex-start;
   }
   .call-columns .transcript-panel { flex: 2 1 0; min-width: 0; }
+  .call-columns .call-transcript { order: 0; }
   .call-columns .coach-panel { display: block; flex: 1 1 0; order: 2; }
+  .call-privacy { order: 3; flex: 0 0 100%; }
   .coach-strip { display: none; }
 }
 

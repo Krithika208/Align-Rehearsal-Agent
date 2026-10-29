@@ -16,7 +16,7 @@ import {
   endReasonFromDisconnect,
   type SignalTracker,
 } from "@/lib/rehearsalSignals";
-import { cleanNote, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
+import { cleanNote, formatClock, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -71,6 +71,10 @@ export default function AppClient({
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [wrappingUp, setWrappingUp] = useState(false);
+  // Call screen clock: seconds since the session timer started, and whether
+  // the 18-minute point has passed ("About 2 minutes left").
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [nearEnd, setNearEnd] = useState(false);
   const [teachingDisabled, setTeachingDisabled] = useState(false);
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
@@ -132,6 +136,8 @@ export default function AppClient({
     transcriptRef.current = [];
     setWrappingUp(false);
     wrappingUpRef.current = false;
+    setElapsedSeconds(0);
+    setNearEnd(false);
     turnIdRef.current = 0;
     notesRef.current = [];
     setNotes([]);
@@ -379,9 +385,12 @@ export default function AppClient({
         void finalizeCall();
         return;
       }
+      setElapsedSeconds(Math.floor(elapsed / 1000));
       if (!wrapSent && elapsed >= WRAP_AT_MS) {
         wrapSent = true;
         nudgeSent = true;
+        // Shown even if the cue itself was skipped: the 20:00 hang-up still applies.
+        setNearEnd(true);
         // Skipped if the user already pressed "Wrap up & debrief".
         if (!wrappingUpRef.current) {
           try {
@@ -479,6 +488,8 @@ export default function AppClient({
         mode={mode}
         transcript={transcript}
         notes={notes}
+        elapsedSeconds={elapsedSeconds}
+        nearEnd={nearEnd}
         wrappingUp={wrappingUp}
         teachingDisabled={teachingDisabled}
         onTeachingMode={requestTeachingMode}
@@ -716,10 +727,14 @@ function SetupScreen({
             onChange={(e) => setSituation(e.target.value)}
             placeholder="e.g. My manager keeps assigning me work that should go to a peer, and I want to push back without sounding unhelpful."
           />
-          <p className="auth-hint setup-privacy-note">
-            What you share here is encrypted before it&apos;s saved. Change
-            names if you&apos;d like. The rehearsal works just as well.
-          </p>
+          <div className="setup-privacy">
+            <LockIcon />
+            <p>
+              <strong>Encrypted before it&apos;s stored.</strong> We don&apos;t
+              read it. Your employer can&apos;t see any of this. Change names if
+              you&apos;d like.
+            </p>
+          </div>
         </div>
 
         {error && <div className="auth-error">{error}</div>}
@@ -750,10 +765,6 @@ function SetupScreen({
         >
           {starting ? "Connecting…" : "Start rehearsal"}
         </button>
-        <p className="auth-hint setup-cap-note">
-          You have up to 20 minutes, including your debrief. Real
-          conversations come with a clock too.
-        </p>
       </div>
       {fairUseMessage && (
         <FairUseModal message={fairUseMessage} onClose={onDismissFairUse} />
@@ -766,6 +777,8 @@ function CallScreen({
   mode,
   transcript,
   notes,
+  elapsedSeconds,
+  nearEnd,
   wrappingUp,
   teachingDisabled,
   onTeachingMode,
@@ -777,6 +790,8 @@ function CallScreen({
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
   notes: CoachingNote[];
+  elapsedSeconds: number;
+  nearEnd: boolean;
   wrappingUp: boolean;
   teachingDisabled: boolean;
   onTeachingMode: () => void;
@@ -822,6 +837,13 @@ function CallScreen({
         <div className="call-status">
           {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
         </div>
+        {/* Elapsed time only: never the limit, a countdown or a target. */}
+        <div className="call-clock">
+          <span role="timer" aria-label="Time elapsed">
+            {formatClock(elapsedSeconds)}
+          </span>
+          {nearEnd && <span>About 2 minutes left</span>}
+        </div>
         <button
           type="button"
           className="btn-teaching-mode"
@@ -865,7 +887,7 @@ function CallScreen({
 
       <div className="call-columns">
       <LiveCoachingNotes notes={notes} />
-      <div className="transcript-panel" aria-live="polite">
+      <div className="transcript-panel call-transcript" aria-live="polite">
         <div className="transcript-label">Live transcript</div>
         <div className="transcript-scroll" ref={scrollRef}>
           {transcript.length === 0 ? (
@@ -887,8 +909,35 @@ function CallScreen({
           )}
         </div>
       </div>
+      <p className="call-privacy">
+        <LockIcon />
+        <span>
+          Encrypted before it&apos;s stored. We don&apos;t read it. Your
+          employer can&apos;t see any of this.
+        </span>
+      </p>
       </div>
     </main>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      className="lock-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
   );
 }
 
