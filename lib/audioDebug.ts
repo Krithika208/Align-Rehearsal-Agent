@@ -68,6 +68,13 @@ function elState(el: HTMLMediaElement): string {
   return `paused=${el.paused} muted=${el.muted} volume=${el.volume}`;
 }
 
+// Short hash of a base64 audio chunk: same bytes, same fingerprint.
+function fingerprint(b64: string): string {
+  let h = 0;
+  for (let i = 0; i < b64.length; i++) h = (h * 31 + b64.charCodeAt(i)) | 0;
+  return `${b64.length}:${h}`;
+}
+
 export function logPlayerState(conversation: unknown, when: string): void {
   if (!DEBUG) return;
   const c = conversation as { output?: Internals; input?: Internals } | null;
@@ -209,6 +216,9 @@ function install(): void {
       if (!String(url).includes("convai")) return;
       dlog("network: connecting to ElevenLabs");
       let audio = 0;
+      // A fingerprint of each audio chunk, so a chunk ElevenLabs sends twice
+      // shows up as "REPEAT" (the player plays every chunk it is sent).
+      const seen = new Map<string, number>();
       this.addEventListener("open", () => dlog("network: connected"));
       this.addEventListener("close", (e) =>
         dlog(`network: closed (code ${e.code}${e.reason ? `, ${e.reason.slice(0, 60)}` : ""})`)
@@ -225,11 +235,24 @@ function install(): void {
         if (type === "audio") {
           audio++;
           const ev = m.audio_event as { event_id?: number; audio_base_64?: string } | undefined;
-          const kb = Math.round(((ev?.audio_base_64?.length ?? 0) * 0.75) / 1024);
-          dlog(`network: audio #${audio}${audio === 1 ? " (FIRST)" : ""}, event ${ev?.event_id}, ${kb} KB`);
+          const b64 = ev?.audio_base_64 ?? "";
+          const kb = Math.round((b64.length * 0.75) / 1024);
+          const print = fingerprint(b64);
+          const first = seen.get(print);
+          if (first === undefined) seen.set(print, audio);
+          dlog(
+            `network: audio #${audio}${audio === 1 ? " (FIRST)" : ""}, event ${ev?.event_id}, ${kb} KB` +
+              (first !== undefined && kb > 0 ? `, REPEAT of #${first}` : "")
+          );
         } else if (type === "agent_response") {
-          const text = (m.agent_response_event as { agent_response?: string })?.agent_response ?? "";
-          dlog(`network: agent response "${text.slice(0, 40)}"`);
+          const r = m.agent_response_event as
+            | { agent_response?: string; event_id?: number; response_id?: string }
+            | undefined;
+          const text = r?.agent_response ?? "";
+          dlog(
+            `network: agent response "${text.slice(0, 40)}", event ${r?.event_id}` +
+              (r?.response_id ? `, response ${r.response_id.slice(0, 8)}` : "")
+          );
         } else if (type === "user_transcript") {
           const text = (m.user_transcription_event as { user_transcript?: string })?.user_transcript ?? "";
           dlog(`network: user transcript "${text.slice(0, 40)}"`);
