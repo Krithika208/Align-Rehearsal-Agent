@@ -8,6 +8,7 @@ import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
+import { playChime } from "@/lib/chime";
 import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
 import { track } from "@/lib/analytics";
 import {
@@ -16,7 +17,7 @@ import {
   endReasonFromDisconnect,
   type SignalTracker,
 } from "@/lib/rehearsalSignals";
-import { cleanNote, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
+import { cleanNote, formatClock, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
 import { prepareMic, withMic } from "@/lib/microphone";
 import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
 import {
@@ -38,10 +39,10 @@ type TranscriptTurn = {
 // App-signalled session timing. The agent can't time itself, so the app sends
 // these cues. The strings must match the ElevenLabs system prompt exactly.
 const NUDGE_AT_MS = 15 * 60 * 1000;
-const WRAP_AT_MS = 18 * 60 * 1000;
+const WRAP_AT_MS = 17 * 60 * 1000;
 const HARD_STOP_AT_MS = 20 * 60 * 1000;
 const NUDGE_CUE = "[Time cue: 15 minutes elapsed]";
-const WRAP_CUE = "[Time cue: 18 minutes elapsed - wrap and debrief now]";
+const WRAP_CUE = "[Time cue: 17 minutes elapsed - wrap and debrief now]";
 
 type ActiveCall = {
   conversation: Awaited<ReturnType<typeof Conversation.startSession>>;
@@ -71,6 +72,10 @@ export default function AppClient({
   const [mode, setMode] = useState<"listening" | "speaking">("listening");
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [wrappingUp, setWrappingUp] = useState(false);
+  // Call screen clock: seconds since the session timer started, and whether
+  // the 17-minute wrap-up notice shows ("3 minutes left...").
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [nearEnd, setNearEnd] = useState(false);
   const [teachingDisabled, setTeachingDisabled] = useState(false);
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
@@ -132,6 +137,8 @@ export default function AppClient({
     transcriptRef.current = [];
     setWrappingUp(false);
     wrappingUpRef.current = false;
+    setElapsedSeconds(0);
+    setNearEnd(false);
     turnIdRef.current = 0;
     notesRef.current = [];
     setNotes([]);
@@ -379,11 +386,15 @@ export default function AppClient({
         void finalizeCall();
         return;
       }
+      setElapsedSeconds(Math.floor(elapsed / 1000));
       if (!wrapSent && elapsed >= WRAP_AT_MS) {
         wrapSent = true;
         nudgeSent = true;
-        // Skipped if the user already pressed "Wrap up & debrief".
+        // Cue, notice and chime are all skipped if the user already pressed
+        // "Wrap up & debrief".
         if (!wrappingUpRef.current) {
+          setNearEnd(true);
+          void playChime().then((played) => dlog(`chime: ${played ? "played" : "blocked"}`));
           try {
             active.conversation.sendUserMessage(WRAP_CUE);
             signal((t) => t.timeCue());
@@ -479,6 +490,8 @@ export default function AppClient({
         mode={mode}
         transcript={transcript}
         notes={notes}
+        elapsedSeconds={elapsedSeconds}
+        nearEnd={nearEnd}
         wrappingUp={wrappingUp}
         teachingDisabled={teachingDisabled}
         onTeachingMode={requestTeachingMode}
@@ -716,10 +729,14 @@ function SetupScreen({
             onChange={(e) => setSituation(e.target.value)}
             placeholder="e.g. My manager keeps assigning me work that should go to a peer, and I want to push back without sounding unhelpful."
           />
-          <p className="auth-hint setup-privacy-note">
-            What you share here is encrypted before it&apos;s saved. Change
-            names if you&apos;d like. The rehearsal works just as well.
-          </p>
+          <div className="setup-privacy">
+            <LockIcon />
+            <p>
+              <strong>Encrypted before it&apos;s stored.</strong> We don&apos;t
+              read it. Your employer can&apos;t see any of this. Change names if
+              you&apos;d like.
+            </p>
+          </div>
         </div>
 
         {error && <div className="auth-error">{error}</div>}
@@ -750,10 +767,6 @@ function SetupScreen({
         >
           {starting ? "Connecting…" : "Start rehearsal"}
         </button>
-        <p className="auth-hint setup-cap-note">
-          You have up to 20 minutes, including your debrief. Real
-          conversations come with a clock too.
-        </p>
       </div>
       {fairUseMessage && (
         <FairUseModal message={fairUseMessage} onClose={onDismissFairUse} />
@@ -766,6 +779,8 @@ function CallScreen({
   mode,
   transcript,
   notes,
+  elapsedSeconds,
+  nearEnd,
   wrappingUp,
   teachingDisabled,
   onTeachingMode,
@@ -777,6 +792,8 @@ function CallScreen({
   mode: "listening" | "speaking";
   transcript: TranscriptTurn[];
   notes: CoachingNote[];
+  elapsedSeconds: number;
+  nearEnd: boolean;
   wrappingUp: boolean;
   teachingDisabled: boolean;
   onTeachingMode: () => void;
@@ -797,6 +814,31 @@ function CallScreen({
     mode === "speaking" ? "agent" : "listening";
 
   return (
+    <>
+    {/* Pinned to the top while scrolling. Sticky, not fixed, so it takes its
+        own space and never covers the call card, buttons or coaching strip. */}
+    <div className="call-bar">
+      <div className="call-bar-inner">
+        <p className="call-bar-privacy">
+          <LockIcon />
+          <span>
+            Encrypted before it&apos;s stored. We don&apos;t read it. Your
+            employer can&apos;t see any of this.
+          </span>
+        </p>
+        {/* Elapsed time only: never the limit, a countdown or a target. */}
+        <div className={`call-bar-time ${nearEnd ? "call-bar-time-notice" : ""}`}>
+          {nearEnd && (
+            <span className="call-bar-notice" role="status">
+              3 minutes left. Jordan will wrap up now.
+            </span>
+          )}
+          <span className="call-bar-clock" role="timer" aria-label="Time elapsed">
+            {formatClock(elapsedSeconds)}
+          </span>
+        </div>
+      </div>
+    </div>
     <main className="app-shell call-shell">
       <div className="call-card">
         <div
@@ -889,6 +931,27 @@ function CallScreen({
       </div>
       </div>
     </main>
+    </>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      className="lock-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
   );
 }
 
