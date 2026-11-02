@@ -8,6 +8,7 @@ import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
 import { isSoundBlocked, turnSoundOn } from "@/lib/audioOutput";
+import { playChime } from "@/lib/chime";
 import { dlog, logPlayerState, markStartTap, watchOutputLevel } from "@/lib/audioDebug";
 import { track } from "@/lib/analytics";
 import {
@@ -38,10 +39,10 @@ type TranscriptTurn = {
 // App-signalled session timing. The agent can't time itself, so the app sends
 // these cues. The strings must match the ElevenLabs system prompt exactly.
 const NUDGE_AT_MS = 15 * 60 * 1000;
-const WRAP_AT_MS = 18 * 60 * 1000;
+const WRAP_AT_MS = 17 * 60 * 1000;
 const HARD_STOP_AT_MS = 20 * 60 * 1000;
 const NUDGE_CUE = "[Time cue: 15 minutes elapsed]";
-const WRAP_CUE = "[Time cue: 18 minutes elapsed - wrap and debrief now]";
+const WRAP_CUE = "[Time cue: 17 minutes elapsed - wrap and debrief now]";
 
 type ActiveCall = {
   conversation: Awaited<ReturnType<typeof Conversation.startSession>>;
@@ -72,7 +73,7 @@ export default function AppClient({
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [wrappingUp, setWrappingUp] = useState(false);
   // Call screen clock: seconds since the session timer started, and whether
-  // the 18-minute point has passed ("About 2 minutes left").
+  // the 17-minute wrap-up notice shows ("3 minutes left...").
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [nearEnd, setNearEnd] = useState(false);
   const [teachingDisabled, setTeachingDisabled] = useState(false);
@@ -389,10 +390,11 @@ export default function AppClient({
       if (!wrapSent && elapsed >= WRAP_AT_MS) {
         wrapSent = true;
         nudgeSent = true;
-        // Shown even if the cue itself was skipped: the 20:00 hang-up still applies.
-        setNearEnd(true);
-        // Skipped if the user already pressed "Wrap up & debrief".
+        // Cue, notice and chime are all skipped if the user already pressed
+        // "Wrap up & debrief".
         if (!wrappingUpRef.current) {
+          setNearEnd(true);
+          void playChime().then((played) => dlog(`chime: ${played ? "played" : "blocked"}`));
           try {
             active.conversation.sendUserMessage(WRAP_CUE);
             signal((t) => t.timeCue());
@@ -812,6 +814,31 @@ function CallScreen({
     mode === "speaking" ? "agent" : "listening";
 
   return (
+    <>
+    {/* Pinned to the top while scrolling. Sticky, not fixed, so it takes its
+        own space and never covers the call card, buttons or coaching strip. */}
+    <div className="call-bar">
+      <div className="call-bar-inner">
+        <p className="call-bar-privacy">
+          <LockIcon />
+          <span>
+            Encrypted before it&apos;s stored. We don&apos;t read it. Your
+            employer can&apos;t see any of this.
+          </span>
+        </p>
+        {/* Elapsed time only: never the limit, a countdown or a target. */}
+        <div className={`call-bar-time ${nearEnd ? "call-bar-time-notice" : ""}`}>
+          {nearEnd && (
+            <span className="call-bar-notice" role="status">
+              3 minutes left. Jordan will wrap up now.
+            </span>
+          )}
+          <span className="call-bar-clock" role="timer" aria-label="Time elapsed">
+            {formatClock(elapsedSeconds)}
+          </span>
+        </div>
+      </div>
+    </div>
     <main className="app-shell call-shell">
       <div className="call-card">
         <div
@@ -836,13 +863,6 @@ function CallScreen({
         )}
         <div className="call-status">
           {mode === "speaking" ? "Jordan speaking…" : "Listening…"}
-        </div>
-        {/* Elapsed time only: never the limit, a countdown or a target. */}
-        <div className="call-clock">
-          <span role="timer" aria-label="Time elapsed">
-            {formatClock(elapsedSeconds)}
-          </span>
-          {nearEnd && <span>About 2 minutes left</span>}
         </div>
         <button
           type="button"
@@ -887,7 +907,7 @@ function CallScreen({
 
       <div className="call-columns">
       <LiveCoachingNotes notes={notes} />
-      <div className="transcript-panel call-transcript" aria-live="polite">
+      <div className="transcript-panel" aria-live="polite">
         <div className="transcript-label">Live transcript</div>
         <div className="transcript-scroll" ref={scrollRef}>
           {transcript.length === 0 ? (
@@ -909,15 +929,9 @@ function CallScreen({
           )}
         </div>
       </div>
-      <p className="call-privacy">
-        <LockIcon />
-        <span>
-          Encrypted before it&apos;s stored. We don&apos;t read it. Your
-          employer can&apos;t see any of this.
-        </span>
-      </p>
       </div>
     </main>
+    </>
   );
 }
 
