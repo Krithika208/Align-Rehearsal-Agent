@@ -172,7 +172,7 @@ export default function AppClient({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (body.code === "free_limit_reached") {
-          window.location.href = "/pricing?reason=free_limit_reached";
+          window.location.href = "/account?reason=out_of_rehearsals";
           return;
         }
         if (body.code === "payment_issue") {

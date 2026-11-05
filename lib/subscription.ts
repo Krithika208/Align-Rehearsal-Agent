@@ -68,7 +68,7 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfo> {
   };
 }
 
-// How many of their 5 lifetime free rehearsals the signed-in user has used.
+// How many of their lifetime free rehearsals (FREE_SESSION_LIMIT) the signed-in user has used.
 export async function getFreeSessionsUsed(): Promise<number> {
   const supabase = await createClient();
   const {
@@ -102,27 +102,50 @@ export async function getFoundingPerk(): Promise<FoundingPerk | null> {
   return data ?? null;
 }
 
+// The signed-in user's credit balance: the sum of their ledger rows. RLS
+// means they can only ever read their own.
+export async function getCreditBalance(): Promise<number> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { data } = await supabase
+    .from("credit_ledger")
+    .select("delta")
+    .eq("user_id", user.id);
+
+  return (data ?? []).reduce((sum, row) => sum + (row.delta as number), 0);
+}
+
 // Gate for /app. Assumes the middleware has already ensured the user is signed
-// in. Paid users go straight through; free users go through while they have
-// free rehearsals left. Redirects server-side, before render, so no flicker.
+// in. In order: an active subscription goes straight through; then free
+// rehearsals; then credits. With none left, the user goes to /account to buy
+// more. Redirects server-side, before render, so no flicker.
+// freeSessionsUsed is null when the free count shouldn't be shown (subscribers,
+// and users now paying with credits).
 export async function requireAppAccess(): Promise<{
   info: SubscriptionInfo;
   freeSessionsUsed: number | null;
 }> {
   const info = await getSubscriptionInfo();
 
-  if (isPaymentIssue(info.status)) {
-    redirect("/account?reason=payment_issue");
-  }
-
   if (info.active) {
     return { info, freeSessionsUsed: null };
   }
 
   const freeSessionsUsed = await getFreeSessionsUsed();
-  if (freeSessionsUsed >= FREE_SESSION_LIMIT) {
-    redirect("/pricing?reason=free_limit_reached");
+  if (freeSessionsUsed < FREE_SESSION_LIMIT) {
+    return { info, freeSessionsUsed };
   }
 
-  return { info, freeSessionsUsed };
+  if ((await getCreditBalance()) > 0) {
+    return { info, freeSessionsUsed: null };
+  }
+
+  if (isPaymentIssue(info.status)) {
+    redirect("/account?reason=payment_issue");
+  }
+  redirect("/account?reason=out_of_rehearsals");
 }

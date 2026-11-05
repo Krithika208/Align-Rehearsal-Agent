@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { encryptTranscript, toBytea } from "@/lib/encryption";
 import { parseNotes } from "@/lib/coachingNotes";
 import { parseSignals } from "@/lib/rehearsalSignals";
+import { CREDIT_REFUND_UNDER_SECONDS } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -97,6 +98,13 @@ export async function POST(req: Request) {
     );
   }
 
+  // A paid rehearsal (one credit) that lasted under 60 seconds gets its
+  // credit back. The database allows only one refund per rehearsal, so a
+  // repeated save never refunds twice. Best-effort: never stops the save.
+  if (duration_seconds < CREDIT_REFUND_UNDER_SECONDS) {
+    await refundShortRehearsal(id, user.id);
+  }
+
   // How the rehearsal unfolded and ended: labels and numbers only, checked
   // field by field. Written separately and best-effort, so a bad value or a
   // missing column never stops the rehearsal itself from saving.
@@ -126,4 +134,31 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true, duration_seconds });
+}
+
+async function refundShortRehearsal(conversationId: string, userId: string) {
+  const service = createServiceRoleClient();
+  const { data: charge, error: chargeError } = await service
+    .from("credit_ledger")
+    .select("id")
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId)
+    .eq("reason", "rehearsal")
+    .maybeSingle();
+  if (chargeError) {
+    console.error("[end-conversation] credit lookup failed:", chargeError.message);
+    return;
+  }
+  if (!charge) return; // free or subscription rehearsal: nothing to refund
+
+  const { error } = await service.from("credit_ledger").insert({
+    user_id: userId,
+    delta: 1,
+    reason: "refund",
+    conversation_id: conversationId,
+  });
+  // 23505 = already refunded (unique index); that's fine.
+  if (error && error.code !== "23505") {
+    console.error("[end-conversation] credit refund failed:", error.message);
+  }
 }

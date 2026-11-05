@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { scheduleFoundingWelcomeEmail } from "@/lib/emails/founding-welcome";
+import { CREDIT_PACKS, isCreditPackId } from "@/lib/plans";
 
 // Stripe webhooks need the byte-exact raw body for signature verification.
 // Force the Node.js runtime and opt out of static optimization / body parsing.
@@ -27,6 +28,32 @@ function lookupKeyFromSubscription(
   subscription: Stripe.Subscription
 ): string | null {
   return subscription.items.data[0]?.price.lookup_key ?? null;
+}
+
+type ServiceClient = ReturnType<typeof createServiceRoleClient>;
+
+// Adds the credits for a paid one-off Checkout session. Idempotent: the
+// ledger allows one row per Checkout session id, so a repeated webhook hits
+// the unique constraint and grants nothing more.
+async function grantCredits(supabase: ServiceClient, session: Stripe.Checkout.Session) {
+  if (session.payment_status !== "paid") return; // async payment still pending
+
+  const userId = session.metadata?.user_id;
+  const packId = session.metadata?.credit_pack;
+  if (!userId || !isCreditPackId(packId)) {
+    console.error(`[stripe-webhook] credit session ${session.id} has no user or pack`);
+    return;
+  }
+
+  const { error } = await supabase.from("credit_ledger").insert({
+    user_id: userId,
+    delta: CREDIT_PACKS[packId].credits,
+    reason: "purchase",
+    stripe_checkout_session_id: session.id,
+  });
+  if (error && error.code !== "23505") {
+    throw new Error(`Failed to grant credits: ${error.message}`);
+  }
 }
 
 export async function POST(request: Request) {
@@ -58,8 +85,20 @@ export async function POST(request: Request) {
 
   try {
     switch (event.type) {
+      // A delayed payment method (e.g. bank debit) confirmed later.
+      case "checkout.session.async_payment_succeeded": {
+        const session = event.data.object;
+        if (session.mode === "payment") await grantCredits(supabase, session);
+        break;
+      }
+
       case "checkout.session.completed": {
         const session = event.data.object;
+        // One-off credit purchase. No subscription, no founding perk.
+        if (session.mode === "payment") {
+          await grantCredits(supabase, session);
+          break;
+        }
         const subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription

@@ -79,9 +79,12 @@ export async function POST(req: Request) {
     );
   }
 
-  // Count this session before connecting. Paid users are checked against the
-  // monthly fair-use cap; free users against their 5 lifetime rehearsals. The
-  // count is kept even if the ElevenLabs connection later fails.
+  // Count this session before connecting. In order:
+  //   1. an active subscription: counted against the monthly fair-use cap
+  //   2. free rehearsals (FREE_SESSION_LIMIT lifetime)
+  //   3. credits: one is spent now, and given back below if the rehearsal
+  //      fails to start, or later by end-conversation if it lasts under 60s
+  // The free count is kept even if the ElevenLabs connection later fails.
   const { data: sub } = await supabase
     .from("subscriptions")
     .select("status")
@@ -89,15 +92,10 @@ export async function POST(req: Request) {
     .maybeSingle();
   const status = sub?.status ?? "none";
 
-  if (isPaymentIssue(status)) {
-    return NextResponse.json(
-      { error: "There's a problem with your payment.", code: "payment_issue" },
-      { status: 402 }
-    );
-  }
-
   const service = createServiceRoleClient();
   let freeSessionsUsed: number | null = null;
+  // The ledger row for the credit spent on this rehearsal, if any.
+  let creditLedgerId: string | null = null;
 
   if (status === "active" || status === "trialing") {
     const { data: count, error } = await service.rpc(
@@ -131,16 +129,53 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    if ((count as number) > FREE_SESSION_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "You've used your 5 free rehearsals.",
-          code: "free_limit_reached",
-        },
-        { status: 403 }
+
+    if ((count as number) <= FREE_SESSION_LIMIT) {
+      freeSessionsUsed = count as number;
+    } else {
+      // Free rehearsals used up: spend a credit.
+      const { data: ledgerId, error: creditError } = await service.rpc(
+        "spend_credit",
+        { p_user_id: user.id }
+      );
+      if (creditError) {
+        console.error("[start-conversation] spend_credit failed:", creditError.message);
+        return NextResponse.json(
+          { error: "Couldn't start your rehearsal. Please try again." },
+          { status: 500 }
+        );
+      }
+      if (!ledgerId) {
+        if (isPaymentIssue(status)) {
+          return NextResponse.json(
+            { error: "There's a problem with your payment.", code: "payment_issue" },
+            { status: 402 }
+          );
+        }
+        return NextResponse.json(
+          {
+            error: `You've used your ${FREE_SESSION_LIMIT} free rehearsals.`,
+            code: "free_limit_reached",
+          },
+          { status: 403 }
+        );
+      }
+      creditLedgerId = ledgerId as string;
+    }
+  }
+
+  // Gives the credit back if the rehearsal never got going. Best-effort.
+  async function refundCredit(why: string) {
+    if (!creditLedgerId) return;
+    const { error } = await service
+      .from("credit_ledger")
+      .insert({ user_id: user!.id, delta: 1, reason: "refund" });
+    if (error) {
+      console.error(
+        `[start-conversation] credit refund failed (${why}) for ledger row ${creditLedgerId}:`,
+        error.message
       );
     }
-    freeSessionsUsed = count as number;
   }
 
   const elRes = await fetch(
@@ -154,6 +189,7 @@ export async function POST(req: Request) {
     }
   );
   if (!elRes.ok) {
+    await refundCredit("elevenlabs");
     const text = await elRes.text();
     return NextResponse.json(
       { error: `ElevenLabs error (${elRes.status}): ${text.slice(0, 200)}` },
@@ -162,6 +198,7 @@ export async function POST(req: Request) {
   }
   const { signed_url } = (await elRes.json()) as { signed_url?: string };
   if (!signed_url) {
+    await refundCredit("no signed url");
     return NextResponse.json(
       { error: "ElevenLabs did not return a signed URL" },
       { status: 502 }
@@ -184,10 +221,24 @@ export async function POST(req: Request) {
     .single();
 
   if (insertError || !inserted) {
+    await refundCredit("conversation insert");
     return NextResponse.json(
       { error: `Failed to record conversation: ${insertError?.message}` },
       { status: 500 }
     );
+  }
+
+  // Link the credit to this rehearsal, so end-conversation can refund it if
+  // the call is short. If this fails the rehearsal still goes ahead; it just
+  // can't be refunded automatically.
+  if (creditLedgerId) {
+    const { error: linkError } = await service
+      .from("credit_ledger")
+      .update({ conversation_id: inserted.id })
+      .eq("id", creditLedgerId);
+    if (linkError) {
+      console.error("[start-conversation] linking credit failed:", linkError.message);
+    }
   }
 
   return NextResponse.json({

@@ -29,7 +29,8 @@ Voice: two Jordan agents (female default, male), same prompt. Choice saved as `p
 
 ## Pricing
 
-- **Free:** $0, 5 rehearsals lifetime, no card
+- **Credits (branch `credits-stage-1`, Stage 1 of 3, not yet on `main`):** pay-as-you-go replaces the subscription. Free is 3 rehearsals lifetime (was 5; `FREE_SESSION_LIMIT` in `lib/plans.ts` and `increment_free_session_count` in migration 10). One-off packs: $5 for 1 credit (lookup key `rehearsal_single`), $20 for 5 (`rehearsal_pack_5`); created by `scripts/stripe-create-credit-products.mjs`. Credits never expire. `credit_ledger` (migration 10) holds one row per change; balance is the sum of `delta`. `/api/stripe/create-credit-checkout` opens Checkout in payment mode; the webhook adds credits on `checkout.session.completed` (and `checkout.session.async_payment_succeeded`) when paid, once per Checkout session id (unique column). No founding perk for credit buyers. Gate order (`/app` and `start-conversation`): active subscription, then free rehearsals, then credits (`spend_credit`, locked so one credit can't be spent twice). The credit is linked to the conversation and refunded by `end-conversation` if the call lasts under 60 seconds (one refund per conversation, unique index), or straight away if the rehearsal fails to start. Out of rehearsals goes to `/account?reason=out_of_rehearsals`. `/account` shows free rehearsals left, credit balance and "Buy 1 rehearsal ($5)" / "Buy 5 rehearsals ($20)"; the subscribe and "Subscribe again" links are hidden but the subscription code stays. Not yet changed (Stages 2 and 3): `/pricing` (still says 5 free and offers the subscription), marketing copy, emails, Terms.
+- **Free:** $0, 5 rehearsals lifetime, no card (3 on `credits-stage-1`)
 - **Paid:** $10/month or $100/year, one flat tier (Stripe lookup keys `align_monthly`, `align_annual`). Silent fair-use cap of 30 rehearsals/month.
 - **Founding perk:** the first 100 paid users get a one-time 15-min call with Krithika (cal.com), shown on the complete screen and `/account` until claimed. A spot is used for good once allocated. Clicking "Book my call" claims nothing: the perk is claimed only when the Cal.com webhook (`app/api/cal/webhook/route.ts`) reports a `BOOKING_CREATED` for the `coaching-debrief` event type. It matches on `metadata[perk_ref]` (the row's opaque `booking_ref`, added to the in-app link), then falls back to the attendee's email (the welcome email has the plain link). Once claimed it stays claimed; cancellations and reschedules are ignored. Unmatched bookings are logged, not failed.
 - **Account status:** `/account` reads the subscription live from Stripe. A portal cancellation shows "Cancels on [date]" and "Access until [date]"; reversing it restores the normal view. Statuses use friendly British labels (e.g. "Cancelled"), never raw Stripe values. When the plan has fully ended, `/account` shows a "Subscribe again" button to `/pricing`.
@@ -104,12 +105,13 @@ Migrations live in `db/migrations/` and are run by hand in the Supabase SQL edit
 7. `2026_09_30_drop_plaintext_columns.sql` (only once the encrypting code is live, which it now is on `main`)
 8. `2026_10_02_founding_perk_booking.sql` (adds `booking_ref`, email lookup function, resets all click-based claims; run once)
 9. `2026_10_09_rehearsal_end_signals.sql` (adds the rehearsal end-signal columns; only adds columns, safe to run twice)
+10. `2026_11_05_credit_ledger.sql` (`credit_ledger`, `spend_credit`, free limit 5 to 3; safe to run twice; branch `credits-stage-1`)
 
 Run on production on 2 Oct 2026: `founding_perk_booking`, `wipe_test_conversations`, `drop_plaintext_columns` (the plaintext columns no longer exist). Earlier ones are not recorded; check in Supabase before running anything.
 
 The `founding_perks` table was emptied on production on 2 Oct 2026, so all 100 founding spots are open.
 
-Tables: `profiles`, `conversations` (including the end-signal columns), `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`.
+Tables: `profiles`, `conversations` (including the end-signal columns), `subscriptions`, `usage_counters`, `founding_perks`, `rehearsal_outcomes`, `credit_ledger` (migration 10).
 
 ## How to work with Krithika
 

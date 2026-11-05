@@ -2,7 +2,14 @@ import Link from "next/link";
 import HeaderMenu from "@/components/HeaderMenu";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getFoundingPerk, getSubscriptionInfo } from "@/lib/subscription";
+import {
+  getCreditBalance,
+  getFoundingPerk,
+  getFreeSessionsUsed,
+  getSubscriptionInfo,
+} from "@/lib/subscription";
+import { FREE_SESSION_LIMIT } from "@/lib/plans";
+import BuyCreditsButton from "@/components/BuyCreditsButton";
 import { stripe } from "@/lib/stripe";
 import SiteFooter from "@/components/SiteFooter";
 import ManageBillingButton from "@/components/ManageBillingButton";
@@ -74,9 +81,9 @@ async function fetchBillingDates(subscriptionId: string): Promise<BillingDates> 
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reason?: string }>;
+  searchParams: Promise<{ reason?: string; purchase?: string }>;
 }) {
-  const { reason } = await searchParams;
+  const { reason, purchase } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -84,8 +91,18 @@ export default async function AccountPage({
 
   if (!user) redirect("/login?redirectTo=/account");
 
-  const [{ subscription, status, billingInterval }, foundingPerk] =
-    await Promise.all([getSubscriptionInfo(), getFoundingPerk()]);
+  const [
+    { subscription, status, billingInterval },
+    foundingPerk,
+    freeSessionsUsed,
+    creditBalance,
+  ] = await Promise.all([
+    getSubscriptionInfo(),
+    getFoundingPerk(),
+    getFreeSessionsUsed(),
+    getCreditBalance(),
+  ]);
+  const freeLeft = Math.max(0, FREE_SESSION_LIMIT - freeSessionsUsed);
   const plan = billingInterval ? PLAN_BY_INTERVAL[billingInterval] : null;
 
   let billing: BillingDates = { periodEnd: null, cancelAt: null };
@@ -93,7 +110,6 @@ export default async function AccountPage({
     billing = await fetchBillingDates(subscription.stripe_subscription_id);
   }
   const cancelling = status !== "canceled" && billing.cancelAt !== null;
-  const ended = status === "canceled" || status === "incomplete_expired";
 
   return (
     <>
@@ -125,7 +141,19 @@ export default async function AccountPage({
               details below to restore access.
             </div>
           )}
-          {subscription ? (
+          {reason === "out_of_rehearsals" && (
+            <div className="account-banner" role="status">
+              You&apos;ve used your {FREE_SESSION_LIMIT} free rehearsals. Buy a
+              rehearsal below to keep practising.
+            </div>
+          )}
+          {purchase === "success" && (
+            <div className="account-banner" role="status">
+              Payment received, thank you. Your rehearsals will show below in a
+              moment. Refresh the page if they don&apos;t.
+            </div>
+          )}
+          {subscription && (
             <>
               <div className="section-label">Your subscription</div>
               <h1 className="account-heading">Pro</h1>
@@ -171,30 +199,38 @@ export default async function AccountPage({
                 <FoundingPerkCard perk={foundingPerk} variant="account" />
               )}
 
-              {ended && (
-                <div className="account-action">
-                  <Link href="/pricing" className="btn-primary">
-                    Subscribe again
-                  </Link>
-                </div>
-              )}
-
               <ManageBillingButton />
             </>
-          ) : (
-            <>
-              <div className="section-label">Account</div>
-              <h1 className="account-heading">Free plan</h1>
-              <p className="account-note">
-                You get 5 free rehearsals. Subscribe for unlimited practice.
-              </p>
-              <div className="account-action">
-                <Link href="/pricing" className="btn-primary">
-                  See pricing
-                </Link>
-              </div>
-            </>
           )}
+
+          <div
+            className="section-label"
+            style={subscription ? { marginTop: "2rem" } : undefined}
+          >
+            Rehearsals
+          </div>
+          {subscription ? (
+            <h2 className="account-heading">Credits</h2>
+          ) : (
+            <h1 className="account-heading">Credits</h1>
+          )}
+          <dl className="account-details">
+            <div className="account-row">
+              <dt>Free rehearsals left</dt>
+              <dd>
+                {freeLeft} of {FREE_SESSION_LIMIT}
+              </dd>
+            </div>
+            <div className="account-row">
+              <dt>Credits</dt>
+              <dd>{creditBalance}</dd>
+            </div>
+          </dl>
+          <p className="account-note">
+            One credit is one rehearsal. Credits never expire.
+          </p>
+          <BuyCreditsButton pack="single" />
+          <BuyCreditsButton pack="pack_5" />
 
           <div className="account-meta">
             <span className="account-email">{user.email}</span>
