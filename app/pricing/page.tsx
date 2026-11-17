@@ -90,11 +90,11 @@ export default async function PricingPage({
             <div className="pricing-card">
               <div className="pricing-badge">Pay as you go</div>
               <div className="pricing-amount">
-                <span className="pricing-price">$5</span>
+                <span className="pricing-price">$3</span>
                 <span className="pricing-period">/ rehearsal</span>
               </div>
               <p className="pricing-alt">
-                or <strong>$20</strong> for 5 rehearsals
+                or <strong>$12</strong> for 5 rehearsals
               </p>
               <p className="pricing-note">Credits never expire.</p>
               {user ? (

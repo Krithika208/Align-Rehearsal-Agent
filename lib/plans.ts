@@ -17,8 +17,8 @@ export const CREDIT_PACKS: Record<
   CreditPackId,
   { lookupKey: string; credits: number; label: string }
 > = {
-  single: { lookupKey: "rehearsal_single", credits: 1, label: "Buy 1 rehearsal ($5)" },
-  pack_5: { lookupKey: "rehearsal_pack_5", credits: 5, label: "Buy 5 rehearsals ($20)" },
+  single: { lookupKey: "rehearsal_single", credits: 1, label: "Buy 1 rehearsal ($3)" },
+  pack_5: { lookupKey: "rehearsal_pack_5", credits: 5, label: "Buy 5 rehearsals ($12)" },
 };
 
 export function isCreditPackId(value: unknown): value is CreditPackId {
