@@ -59,6 +59,7 @@ export async function POST(request: Request) {
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: ["card"],
       customer: customerId,
       line_items: [{ price: price.id, quantity: 1 }],
       success_url: `${origin}/account?purchase=success`,
