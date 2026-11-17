@@ -2457,3 +2457,52 @@ footer a:hover { text-decoration: underline; }
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Out-of-rehearsals screen on /app: two buy buttons, nothing else. */
+.out-actions {
+  margin: 2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 360px;
+}
+.out-buy .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+.out-buy .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.out-note {
+  margin: 1.75rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.out-note a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Pricing: the pay-as-you-go card's second price line and buy buttons. */
+.pricing-alt {
+  margin: 0.6rem 0 0;
+  font-size: 1.05rem;
+  color: var(--navy);
+}
+.pricing-alt strong {
+  font-weight: 600;
+}
+.pricing-cta-stack {
+  margin: 1.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pricing-cta-stack .pricing-cta {
+  margin: 0;
+}

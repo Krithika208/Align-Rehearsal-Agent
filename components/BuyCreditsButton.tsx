@@ -4,8 +4,17 @@ import { useState } from "react";
 import { track } from "@/lib/analytics";
 import { CREDIT_PACKS, type CreditPackId } from "@/lib/plans";
 
-// Starts a one-off Stripe Checkout for a credit pack.
-export default function BuyCreditsButton({ pack }: { pack: CreditPackId }) {
+// Starts a one-off Stripe Checkout for a credit pack. returnTo is where Stripe
+// sends the buyer back to afterwards; wrapperClassName fits the page's layout.
+export default function BuyCreditsButton({
+  pack,
+  returnTo = "account",
+  wrapperClassName = "account-action",
+}: {
+  pack: CreditPackId;
+  returnTo?: "account" | "app";
+  wrapperClassName?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +25,7 @@ export default function BuyCreditsButton({ pack }: { pack: CreditPackId }) {
       const res = await fetch("/api/stripe/create-credit-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack }),
+        body: JSON.stringify({ pack, return_to: returnTo }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.url) {
@@ -37,7 +46,7 @@ export default function BuyCreditsButton({ pack }: { pack: CreditPackId }) {
   }
 
   return (
-    <div className="account-action">
+    <div className={wrapperClassName}>
       <button
         type="button"
         className="btn-primary"

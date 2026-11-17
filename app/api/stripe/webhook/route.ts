@@ -4,6 +4,11 @@ import { stripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { scheduleFoundingWelcomeEmail } from "@/lib/emails/founding-welcome";
 import { CREDIT_PACKS, isCreditPackId } from "@/lib/plans";
+import { sendCreditsPurchasedEmail } from "@/lib/emails/credits-purchased";
+
+// The founding perk is no longer offered (credits replaced the subscription),
+// so its welcome email is not sent. The code stays; set to true to turn it back on.
+const SEND_FOUNDING_WELCOME = false;
 
 // Stripe webhooks need the byte-exact raw body for signature verification.
 // Force the Node.js runtime and opt out of static optimization / body parsing.
@@ -45,14 +50,35 @@ async function grantCredits(supabase: ServiceClient, session: Stripe.Checkout.Se
     return;
   }
 
+  const credits = CREDIT_PACKS[packId].credits;
   const { error } = await supabase.from("credit_ledger").insert({
     user_id: userId,
-    delta: CREDIT_PACKS[packId].credits,
+    delta: credits,
     reason: "purchase",
     stripe_checkout_session_id: session.id,
   });
-  if (error && error.code !== "23505") {
+  if (error) {
+    if (error.code === "23505") return; // already granted: no second email either
     throw new Error(`Failed to grant credits: ${error.message}`);
+  }
+
+  // Newly granted: tell them. Best-effort: a failure is logged and the
+  // webhook still succeeds, because the credits are already added.
+  try {
+    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+    const email = authUser.user?.email ?? session.customer_details?.email;
+    if (!email) throw new Error("no email address");
+    await sendCreditsPurchasedEmail({
+      checkoutSessionId: session.id,
+      email,
+      displayName: authUser.user?.user_metadata?.full_name,
+      credits,
+    });
+  } catch (emailError) {
+    console.error(
+      `[stripe-webhook] purchase email not sent for session ${session.id}:`,
+      emailError instanceof Error ? emailError.message : emailError
+    );
   }
 }
 
@@ -161,7 +187,11 @@ export async function POST(request: Request) {
         // Newly allocated slot only (never position 101+, never an existing
         // member, never a webhook retry): schedule Krithika's welcome note.
         // Best-effort: a failure is logged and the webhook still succeeds.
-        if (!existingPerk && (perk as { allocated?: boolean } | null)?.allocated) {
+        if (
+          SEND_FOUNDING_WELCOME &&
+          !existingPerk &&
+          (perk as { allocated?: boolean } | null)?.allocated
+        ) {
           try {
             const { data: authUser } = await supabase.auth.admin.getUserById(userId);
             const email = authUser.user?.email;

@@ -121,31 +121,33 @@ export async function getCreditBalance(): Promise<number> {
 
 // Gate for /app. Assumes the middleware has already ensured the user is signed
 // in. In order: an active subscription goes straight through; then free
-// rehearsals; then credits. With none left, the user goes to /account to buy
-// more. Redirects server-side, before render, so no flicker.
+// rehearsals; then credits. With none left, outOfRehearsals is true and /app
+// shows the buy screen straight away (a payment problem still goes to /account).
+// Redirects server-side, before render, so no flicker.
 // freeSessionsUsed is null when the free count shouldn't be shown (subscribers,
 // and users now paying with credits).
 export async function requireAppAccess(): Promise<{
   info: SubscriptionInfo;
   freeSessionsUsed: number | null;
+  outOfRehearsals: boolean;
 }> {
   const info = await getSubscriptionInfo();
 
   if (info.active) {
-    return { info, freeSessionsUsed: null };
+    return { info, freeSessionsUsed: null, outOfRehearsals: false };
   }
 
   const freeSessionsUsed = await getFreeSessionsUsed();
   if (freeSessionsUsed < FREE_SESSION_LIMIT) {
-    return { info, freeSessionsUsed };
+    return { info, freeSessionsUsed, outOfRehearsals: false };
   }
 
   if ((await getCreditBalance()) > 0) {
-    return { info, freeSessionsUsed: null };
+    return { info, freeSessionsUsed: null, outOfRehearsals: false };
   }
 
   if (isPaymentIssue(info.status)) {
     redirect("/account?reason=payment_issue");
   }
-  redirect("/account?reason=out_of_rehearsals");
+  return { info, freeSessionsUsed: null, outOfRehearsals: true };
 }

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   getCreditBalance,
-  getFoundingPerk,
   getFreeSessionsUsed,
   getSubscriptionInfo,
 } from "@/lib/subscription";
@@ -14,7 +13,6 @@ import { stripe } from "@/lib/stripe";
 import SiteFooter from "@/components/SiteFooter";
 import ManageBillingButton from "@/components/ManageBillingButton";
 import SignOutButton from "@/components/SignOutButton";
-import FoundingPerkCard from "@/components/FoundingPerkCard";
 
 export const metadata = {
   title: "Account — Align",
@@ -91,14 +89,14 @@ export default async function AccountPage({
 
   if (!user) redirect("/login?redirectTo=/account");
 
+  // The founding perk is no longer shown; getFoundingPerk and
+  // FoundingPerkCard are kept for now.
   const [
     { subscription, status, billingInterval },
-    foundingPerk,
     freeSessionsUsed,
     creditBalance,
   ] = await Promise.all([
     getSubscriptionInfo(),
-    getFoundingPerk(),
     getFreeSessionsUsed(),
     getCreditBalance(),
   ]);
@@ -194,10 +192,6 @@ export default async function AccountPage({
                   )
                 )}
               </dl>
-
-              {foundingPerk && (
-                <FoundingPerkCard perk={foundingPerk} variant="account" />
-              )}
 
               <ManageBillingButton />
             </>

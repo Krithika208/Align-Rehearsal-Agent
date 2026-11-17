@@ -7,7 +7,12 @@ import { CREDIT_PACKS, isCreditPackId } from "@/lib/plans";
 // credits once Stripe confirms payment; nothing is granted here.
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => ({}))) as { pack?: unknown };
+    const body = (await request.json().catch(() => ({}))) as {
+      pack?: unknown;
+      return_to?: unknown;
+    };
+    // Back to the rehearsal screen if they bought from there, else /account.
+    const returnPath = body.return_to === "app" ? "/app" : "/account";
     if (!isCreditPackId(body.pack)) {
       return NextResponse.json({ error: "Unknown pack." }, { status: 400 });
     }
@@ -62,8 +67,8 @@ export async function POST(request: Request) {
       payment_method_types: ["card"],
       customer: customerId,
       line_items: [{ price: price.id, quantity: 1 }],
-      success_url: `${origin}/account?purchase=success`,
-      cancel_url: `${origin}/account?purchase=cancelled`,
+      success_url: `${origin}${returnPath}?purchase=success`,
+      cancel_url: `${origin}${returnPath}?purchase=cancelled`,
       automatic_tax: { enabled: true },
       billing_address_collection: "auto",
       customer_update: { address: "auto" },

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
 import { CoachingNotesSection, LiveCoachingNotes } from "@/components/CoachingNotes";
-import FoundingPerkCard from "@/components/FoundingPerkCard";
+import BuyCreditsButton from "@/components/BuyCreditsButton";
 import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
@@ -19,7 +19,7 @@ import {
 } from "@/lib/rehearsalSignals";
 import { cleanNote, formatClock, NOTE_TOOL, type CoachingNote } from "@/lib/coachingNotes";
 import { prepareMic, withMic } from "@/lib/microphone";
-import { FREE_SESSION_LIMIT, type FoundingPerk } from "@/lib/plans";
+import { FREE_SESSION_LIMIT } from "@/lib/plans";
 import {
   RELATIONSHIPS,
   SCENARIOS,
@@ -51,13 +51,13 @@ type ActiveCall = {
 
 export default function AppClient({
   freeSessionsUsed: initialFreeSessionsUsed,
-  foundingPerk,
+  outOfRehearsals: initialOutOfRehearsals,
   initialVoice,
   userEmail,
   userName,
 }: {
   freeSessionsUsed: number | null;
-  foundingPerk: FoundingPerk | null;
+  outOfRehearsals: boolean;
   initialVoice: Voice;
   userEmail: string;
   userName: string | null;
@@ -79,6 +79,8 @@ export default function AppClient({
   const [teachingDisabled, setTeachingDisabled] = useState(false);
   const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
+  // No free rehearsals and no credits left: show the buy screen.
+  const [outOfRehearsals, setOutOfRehearsals] = useState(initialOutOfRehearsals);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
   const [soundBlocked, setSoundBlocked] = useState(false);
   const [notes, setNotes] = useState<CoachingNote[]>([]);
@@ -172,7 +174,7 @@ export default function AppClient({
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (body.code === "free_limit_reached") {
-          window.location.href = "/account?reason=out_of_rehearsals";
+          setOutOfRehearsals(true);
           return;
         }
         if (body.code === "payment_issue") {
@@ -514,7 +516,6 @@ export default function AppClient({
   if (step === "complete") {
     return (
       <CompleteScreen
-        foundingPerk={foundingPerk}
         conversationId={lastConversationId}
         notes={notes}
         onAnother={backToPicker}
@@ -526,6 +527,10 @@ export default function AppClient({
         }}
       />
     );
+  }
+
+  if (outOfRehearsals) {
+    return <OutOfRehearsalsScreen greeting={greeting} />;
   }
 
   if (step === "setup" && scenario) {
@@ -587,6 +592,77 @@ function FairUseModal({
         </button>
       </div>
     </div>
+  );
+}
+
+// Shown when there are no free rehearsals and no credits left: on opening /app,
+// or if Start is refused. Buying from here brings the user back to /app.
+function OutOfRehearsalsScreen({ greeting }: { greeting: string }) {
+  // Back from Stripe before the webhook has added the credits.
+  const [justPaid, setJustPaid] = useState(false);
+  useEffect(() => {
+    setJustPaid(
+      new URLSearchParams(window.location.search).get("purchase") === "success"
+    );
+  }, []);
+
+  return (
+    <main className="app-shell">
+      <header className="app-header">
+        <a href="/" className="auth-logo">
+          align<span>.</span>
+        </a>
+        <HeaderMenu
+          variant="app"
+          loggedIn
+          before={<span className="app-user">Hi, {greeting}</span>}
+          links={[
+            { href: "/rehearsals", label: "Past rehearsals" },
+            { href: "/account", label: "Account" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
+      </header>
+      <div className="app-inner app-inner-narrow out-inner">
+        {justPaid ? (
+          <>
+            <div className="section-label">Payment received</div>
+            <h1 className="app-heading">Thank you.</h1>
+            <p className="app-sub">
+              Your rehearsals will be ready in a moment.
+            </p>
+            <div className="out-actions">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Start rehearsing
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="section-label">Keep practising</div>
+            <h1 className="app-heading">
+              You&apos;ve used your free rehearsals.
+            </h1>
+            <p className="app-sub">
+              Buy more to keep going. They never expire, and each rehearsal
+              runs for up to 20 minutes.
+            </p>
+            <div className="out-actions">
+              <BuyCreditsButton pack="single" returnTo="app" wrapperClassName="out-buy" />
+              <BuyCreditsButton pack="pack_5" returnTo="app" wrapperClassName="out-buy" />
+            </div>
+            <p className="out-note">
+              Your saved rehearsals are still in{" "}
+              <a href="/rehearsals">Past rehearsals</a>.
+            </p>
+          </>
+        )}
+      </div>
+    </main>
   );
 }
 
@@ -956,13 +1032,11 @@ function LockIcon() {
 }
 
 function CompleteScreen({
-  foundingPerk,
   conversationId,
   notes,
   onAnother,
   onDone,
 }: {
-  foundingPerk: FoundingPerk | null;
   conversationId: string | null;
   notes: CoachingNote[];
   onAnother: () => void;
@@ -979,9 +1053,6 @@ function CompleteScreen({
         </p>
         <CoachingNotesSection notes={notes} />
         {conversationId && <OutcomeCard rehearsalId={conversationId} />}
-        {foundingPerk && !foundingPerk.claimed && (
-          <FoundingPerkCard perk={foundingPerk} variant="debrief" />
-        )}
         <div className="complete-actions">
           <button type="button" className="btn-primary" onClick={onAnother}>
             Practice another
