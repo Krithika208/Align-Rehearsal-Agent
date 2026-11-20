@@ -2506,3 +2506,31 @@ footer a:hover { text-decoration: underline; }
 .pricing-cta-stack .pricing-cta {
   margin: 0;
 }
+
+/* /withdraw: model withdrawal form inside the legal page layout. */
+.withdraw-form {
+  margin-top: 1.5rem;
+  max-width: 480px;
+}
+.withdraw-notice {
+  margin: 0;
+  font-weight: 500;
+  color: var(--navy);
+}
+.withdraw-form textarea.auth-input {
+  resize: vertical;
+}
+.withdraw-hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.withdraw-sent {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  background: var(--teal-glow);
+  color: var(--navy);
+}

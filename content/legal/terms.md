@@ -67,7 +67,7 @@ If you are struggling with your mental health, in crisis, or facing significant 
 
 **Refunds.** We don't refund credits you have used, except as set out below or where the law requires.
 
-**Your right to change your mind (UK and EEA).** If you are a consumer living in the UK or the European Economic Area, you can cancel a purchase within 14 days of making it. If you then cancel within the 14 days, we will refund the credits from that purchase that you have not used. Credits you have used are not refunded. To cancel, email [hello@livealign.co](mailto:hello@livealign.co) within the 14 days, or use our model withdrawal form at [link].
+**Your right to change your mind (UK and EEA).** If you are a consumer living in the UK or the European Economic Area, you can cancel a purchase within 14 days of making it. If you then cancel within the 14 days, we will refund the credits from that purchase that you have not used. Credits you have used are not refunded. To cancel, email [hello@livealign.co](mailto:hello@livealign.co) within the 14 days, or use our [model withdrawal form](/withdraw).
 
 **Rehearsal length.** Each rehearsal can run for up to 20 minutes. This limit protects the service for everyone.
 
