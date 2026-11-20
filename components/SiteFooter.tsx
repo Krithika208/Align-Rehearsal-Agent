@@ -23,6 +23,10 @@ export default function SiteFooter() {
         <span className="site-footer-dot" aria-hidden>
           ·
         </span>
+        <Link href="/cookies">Cookie Policy</Link>
+        <span className="site-footer-dot" aria-hidden>
+          ·
+        </span>
         <Link href="/disclaimer">Disclaimer</Link>
         <span className="site-footer-dot" aria-hidden>
           ·
