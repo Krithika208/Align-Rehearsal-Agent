@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { deletePostHogPerson } from "@/lib/posthogAdmin";
+import { sendPostHogDeleteReminder } from "@/lib/emails/posthog-delete-reminder";
 
 export const runtime = "nodejs";
 
@@ -46,13 +47,18 @@ export async function POST(req: Request) {
     }
   }
 
-  // PostHog person and events. Best-effort: logged, never blocks deletion.
+  // PostHog person and events. Best-effort: never blocks deletion. If the
+  // app can't do it (no key on the free plan, or an error), Krithika gets an
+  // email to delete them by hand once the account is gone.
+  let postHogByHand = false;
   try {
     const result = await deletePostHogPerson(user.id);
-    if (result !== "deleted") console.log(`[delete-account] PostHog: ${result} for ${user.id}`);
+    if (result === "not_configured") postHogByHand = true;
+    else if (result === "not_found") console.log(`[delete-account] PostHog: no person for ${user.id}`);
   } catch (err) {
+    postHogByHand = true;
     console.error(
-      `[delete-account] PostHog delete failed for ${user.id}; delete by hand:`,
+      `[delete-account] PostHog delete failed for ${user.id}:`,
       err instanceof Error ? err.message : err
     );
   }
@@ -64,6 +70,17 @@ export async function POST(req: Request) {
       { error: "Couldn't delete your account. Please email privacy@livealign.co." },
       { status: 500 }
     );
+  }
+
+  if (postHogByHand) {
+    try {
+      await sendPostHogDeleteReminder(user.id);
+    } catch (err) {
+      console.error(
+        `[delete-account] PostHog reminder email failed; delete ${user.id} from PostHog by hand:`,
+        err instanceof Error ? err.message : err
+      );
+    }
   }
 
   // Clear the sign-in cookies. The user no longer exists, so ignore errors.
