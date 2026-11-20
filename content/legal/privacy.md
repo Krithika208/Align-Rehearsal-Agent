@@ -91,11 +91,10 @@ To provide the service, we share certain data with the types of service provider
 | Type of provider | Location | What it does for Align |
 |---|---|---|
 | Voice and AI providers | United States | Run the live voice conversation with Jordan and generate Jordan's responses. |
-| Hosting and database providers | European Union (Ireland) | Host our website and app, run sign-in, and store your account data and rehearsal records. |
+| Hosting and database providers | European Union (Ireland) and United States | Host our website and app, run sign-in, and store your account data and rehearsal records. |
 | Payment provider | United States | Processes your payments when you buy rehearsals. |
 | Email providers | United States | Send account emails and provide our business email. |
 | Analytics provider | European Union and United States | Helps us understand how Align is used, only for visitors who accept analytics cookies. |
-| Security and network provider | United States | Protect our website and app from attacks. |
 | Scheduling provider | United States | Lets you book a call with us, if you choose to. |
 
 We have set our voice provider not to keep your recordings or transcripts after a call ends. Under our providers' terms, our providers are not permitted to use your conversations to train AI models.

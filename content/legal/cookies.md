@@ -40,7 +40,7 @@ Our [Privacy Policy](/privacy) explains how long we keep analytics data.
 | Cookie or storage | Provider | Type | Purpose | Duration |
 |---|---|---|---|---|
 | sb-...-auth-token | Align | Essential | Keeps you signed in | 400 days |
-| __cf_bm | Cloudflare | Essential | Protects against bots | 30 minutes |
+| __cf_bm | Supabase (via Cloudflare) | Essential | Protects against bots | 30 minutes |
 | align_cookie_consent (local storage) | Align | Essential | Remembers your cookie choice | 12 months |
 | ph_…_posthog (cookie and local storage) | PostHog | Analytics | Recognises your browser and stores analytics settings | 365 days (cookie); Until deleted (local storage) |
 | PostHog session storage | PostHog | Analytics | Tracks your current visit | Until you close the tab |
@@ -55,7 +55,6 @@ Our [Privacy Policy](/privacy) explains how long we keep analytics data.
 
 | Cookie | Provider | Type | Purpose | Duration |
 |---|---|---|---|---|
-| __cf_bm | Cloudflare | Essential | Protects against bots | 30 minutes |
 | session-id | Our website | Essential | Keeps the website working during your visit | 30 minutes |
 
 
