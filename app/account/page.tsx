@@ -5,10 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getCreditBalance,
   getFreeSessionsUsed,
+  getSensitiveConsentAt,
   getSubscriptionInfo,
 } from "@/lib/subscription";
 import { FREE_SESSION_LIMIT } from "@/lib/plans";
 import BuyCreditsButton from "@/components/BuyCreditsButton";
+import DeleteAccountSection from "@/components/DeleteAccountSection";
 import { stripe } from "@/lib/stripe";
 import SiteFooter from "@/components/SiteFooter";
 import ManageBillingButton from "@/components/ManageBillingButton";
@@ -95,10 +97,12 @@ export default async function AccountPage({
     { subscription, status, billingInterval },
     freeSessionsUsed,
     creditBalance,
+    consentAt,
   ] = await Promise.all([
     getSubscriptionInfo(),
     getFreeSessionsUsed(),
     getCreditBalance(),
+    getSensitiveConsentAt(),
   ]);
   const freeLeft = Math.max(0, FREE_SESSION_LIMIT - freeSessionsUsed);
   const plan = billingInterval ? PLAN_BY_INTERVAL[billingInterval] : null;
@@ -225,6 +229,14 @@ export default async function AccountPage({
           </p>
           <BuyCreditsButton pack="single" />
           <BuyCreditsButton pack="pack_5" />
+
+          {consentAt && (
+            <p className="account-note account-consent">
+              Sensitive data consent given on {formatDate(consentAt)}
+            </p>
+          )}
+
+          <DeleteAccountSection />
 
           <div className="account-meta">
             <span className="account-email">{user.email}</span>

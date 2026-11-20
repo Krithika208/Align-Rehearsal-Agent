@@ -43,7 +43,12 @@ type ConversationRow = {
   duration_seconds: number | null;
 };
 
-export default async function RehearsalsPage() {
+export default async function RehearsalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ deleted?: string }>;
+}) {
+  const { deleted } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -76,6 +81,11 @@ export default async function RehearsalsPage() {
         />
       </header>
       <div className="app-inner app-inner-narrow">
+        {deleted === "1" && (
+          <div className="account-banner" role="status">
+            Rehearsal deleted.
+          </div>
+        )}
         <div className="section-label">Your history</div>
         <h1 className="app-heading">Past rehearsals</h1>
         <p className="app-sub">

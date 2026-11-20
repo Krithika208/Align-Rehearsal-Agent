@@ -79,6 +79,21 @@ export async function POST(req: Request) {
     );
   }
 
+  // One-time sensitive-data consent must be given first (the /app consent
+  // screen). Checked before anything is counted, so no free rehearsal or
+  // credit is used up.
+  const { data: consentRow } = await supabase
+    .from("usage_counters")
+    .select("sensitive_consent_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!consentRow?.sensitive_consent_at) {
+    return NextResponse.json(
+      { error: "Please agree to how sensitive information is used first.", code: "consent_required" },
+      { status: 403 }
+    );
+  }
+
   // Count this session before connecting. In order:
   //   1. an active subscription: counted against the monthly fair-use cap
   //   2. free rehearsals (FREE_SESSION_LIMIT lifetime)

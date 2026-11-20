@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import DebugPanel from "@/components/DebugPanel";
 import AppClient from "./AppClient";
-import { requireAppAccess } from "@/lib/subscription";
+import { getSensitiveConsentAt, requireAppAccess } from "@/lib/subscription";
 
 export const metadata = {
   title: "Rehearse — Align",
@@ -27,13 +27,17 @@ export default async function AppHome() {
 
   // The founding perk is no longer shown (credits replaced the subscription);
   // getFoundingPerk and FoundingPerkCard are kept for now.
-  const { freeSessionsUsed, outOfRehearsals } = await requireAppAccess();
+  const [{ freeSessionsUsed, outOfRehearsals }, consentAt] = await Promise.all([
+    requireAppAccess(),
+    getSensitiveConsentAt(),
+  ]);
 
   return (
     <>
       <AppClient
         freeSessionsUsed={freeSessionsUsed}
         outOfRehearsals={outOfRehearsals}
+        needsConsent={!consentAt}
         initialVoice={initialVoice}
         userEmail={user.email ?? ""}
         userName={fullName}

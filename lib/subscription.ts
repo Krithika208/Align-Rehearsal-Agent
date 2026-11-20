@@ -85,6 +85,24 @@ export async function getFreeSessionsUsed(): Promise<number> {
   return data?.free_sessions_used ?? 0;
 }
 
+// When the signed-in user agreed to sensitive information being used and
+// saved (ISO string), or null if they haven't yet.
+export async function getSensitiveConsentAt(): Promise<string | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("usage_counters")
+    .select("sensitive_consent_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return (data?.sensitive_consent_at as string | null | undefined) ?? null;
+}
+
 // The signed-in user's founding perk, or null if they don't have one.
 export async function getFoundingPerk(): Promise<FoundingPerk | null> {
   const supabase = await createClient();

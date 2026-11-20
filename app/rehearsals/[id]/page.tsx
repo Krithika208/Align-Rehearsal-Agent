@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import SiteFooter from "@/components/SiteFooter";
 import HeaderMenu from "@/components/HeaderMenu";
 import { CoachingNotesSection } from "@/components/CoachingNotes";
+import DeleteRehearsalButton from "@/components/DeleteRehearsalButton";
 import { readSavedContent } from "@/lib/coachingNotes";
 import { decryptText, decryptTranscript, fromBytea } from "@/lib/encryption";
 import { SCENARIOS, scenarioTitle } from "../../app/scenarios";
@@ -177,6 +178,8 @@ export default async function RehearsalDetailPage({
             )}
           </div>
         </div>
+
+        <DeleteRehearsalButton rehearsalId={id} />
       </div>
     </main>
     <SiteFooter />

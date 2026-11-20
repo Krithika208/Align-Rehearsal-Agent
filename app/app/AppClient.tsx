@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Conversation } from "@elevenlabs/client";
 import { CoachingNotesSection, LiveCoachingNotes } from "@/components/CoachingNotes";
 import BuyCreditsButton from "@/components/BuyCreditsButton";
+import { giveSensitiveConsent } from "./actions";
 import HeaderMenu from "@/components/HeaderMenu";
 import MicPicker from "@/components/MicPicker";
 import OutcomeCard from "@/components/OutcomeCard";
@@ -52,12 +53,14 @@ type ActiveCall = {
 export default function AppClient({
   freeSessionsUsed: initialFreeSessionsUsed,
   outOfRehearsals: initialOutOfRehearsals,
+  needsConsent: initialNeedsConsent,
   initialVoice,
   userEmail,
   userName,
 }: {
   freeSessionsUsed: number | null;
   outOfRehearsals: boolean;
+  needsConsent: boolean;
   initialVoice: Voice;
   userEmail: string;
   userName: string | null;
@@ -81,6 +84,8 @@ export default function AppClient({
   const [freeSessionsUsed, setFreeSessionsUsed] = useState(initialFreeSessionsUsed);
   // No free rehearsals and no credits left: show the buy screen.
   const [outOfRehearsals, setOutOfRehearsals] = useState(initialOutOfRehearsals);
+  // One-time sensitive-data consent; shown before anything else on /app.
+  const [needsConsent, setNeedsConsent] = useState(initialNeedsConsent);
   const [fairUseMessage, setFairUseMessage] = useState<string | null>(null);
   const [soundBlocked, setSoundBlocked] = useState(false);
   const [notes, setNotes] = useState<CoachingNote[]>([]);
@@ -173,6 +178,10 @@ export default function AppClient({
       dlog(`server: replied ${res.status}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (body.code === "consent_required") {
+          setNeedsConsent(true);
+          return;
+        }
         if (body.code === "free_limit_reached") {
           setOutOfRehearsals(true);
           return;
@@ -529,6 +538,12 @@ export default function AppClient({
     );
   }
 
+  if (needsConsent) {
+    return (
+      <ConsentScreen greeting={greeting} onConsented={() => setNeedsConsent(false)} />
+    );
+  }
+
   if (outOfRehearsals) {
     return <OutOfRehearsalsScreen greeting={greeting} />;
   }
@@ -592,6 +607,91 @@ function FairUseModal({
         </button>
       </div>
     </div>
+  );
+}
+
+// One-time consent for sensitive information, before a user's first
+// rehearsal. The copy is Krithika's, word for word. Continue stays disabled
+// until the box is ticked; the date is saved by a server action.
+function ConsentScreen({
+  greeting,
+  onConsented,
+}: {
+  greeting: string;
+  onConsented: () => void;
+}) {
+  const [agreed, setAgreed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function handleContinue() {
+    if (!agreed || saving) return;
+    setSaving(true);
+    setFailed(false);
+    const result = await giveSensitiveConsent().catch(() => ({ ok: false }));
+    if (result.ok) {
+      onConsented();
+    } else {
+      setFailed(true);
+      setSaving(false);
+    }
+  }
+
+  return (
+    <main className="app-shell">
+      <header className="app-header">
+        <a href="/" className="auth-logo">
+          align<span>.</span>
+        </a>
+        <HeaderMenu
+          variant="app"
+          loggedIn
+          before={<span className="app-user">Hi, {greeting}</span>}
+          links={[
+            { href: "/account", label: "Account" },
+            { href: "https://livealign.co", label: "Coaching" },
+          ]}
+        />
+      </header>
+      <div className="app-inner app-inner-narrow out-inner consent-inner">
+        <p className="app-sub consent-text">
+          Depending on what you choose to share, rehearsals may touch on
+          sensitive topics, like your health, religion or sexual orientation.
+          Our AI uses them only to run the conversation and give you feedback,
+          and nobody at Align can read them.
+        </p>
+        <label className="consent-check">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+          />
+          <span>
+            I am okay with Align&apos;s AI using and saving any sensitive
+            information I share to run my rehearsal and give feedback.
+          </span>
+        </label>
+        <p className="consent-small">
+          You can withdraw anytime by deleting the rehearsal or your account.{" "}
+          <a href="/privacy">Privacy Policy</a>
+        </p>
+        <div className="out-actions">
+          <button
+            type="button"
+            className="btn-primary consent-continue"
+            disabled={!agreed || saving}
+            onClick={handleContinue}
+          >
+            {saving ? "Saving..." : "Continue"}
+          </button>
+        </div>
+        {failed && (
+          <p className="account-error" role="alert">
+            Something went wrong. Please try again.
+          </p>
+        )}
+      </div>
+    </main>
   );
 }
 
