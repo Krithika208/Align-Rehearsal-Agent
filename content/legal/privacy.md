@@ -34,7 +34,7 @@ Your rehearsals may include sensitive information if you choose to share it, for
 
 If you do choose to share sensitive information during rehearsals, we ask for your explicit consent before you start rehearsing. With that consent, our AI uses the information only to respond to you during the rehearsal and to give you feedback afterwards. It is saved, encrypted, with your rehearsal. Our team cannot read your rehearsals.
 
-You can withdraw your consent at any time by deleting the rehearsals concerned from your Account page, or by deleting your account.
+You can withdraw your consent at any time by deleting the rehearsals concerned from Past rehearsals, or by deleting your account.
 
 ### Your workplace and other people
 
@@ -71,7 +71,7 @@ We do not sell your personal data. We do not use your rehearsal transcripts to t
 
 Essential cookies keep you signed in and keep your account secure. They are always on, because the service doesn't work without them.
 
-Analytics cookies help us understand how Align is used so we can improve it. We use two analytics tools; PostHog, to count page views and actions, record how people move through the app and where they click (with all text hidden), find and fix errors, test new features, and run short in app surveys. PostHog never receives the content of your rehearsals, and PostHog data is stored in the European Union. Google Analytics 4 (provided by Google LLC, US)  which records things like pages viewed, approximate location, device type, and overall usage patterns. Its data is stored in the United States.
+Analytics cookies help us understand how Align is used so we can improve it. We use two analytics tools; PostHog, to count page views and actions, record how people move through the app and where they click (with all text hidden), find and fix errors, test new features, and run short in app surveys. PostHog never receives the content of your rehearsals, and PostHog data is stored in the United States. Google Analytics 4 (provided by Google LLC, US)  which records things like pages viewed, approximate location, device type, and overall usage patterns. Its data is stored in the United States.
 
 Our [Cookie Policy](/cookies) explains this in more detail.
 
@@ -104,7 +104,7 @@ Each provider operates under its own data protection terms. We have data process
 
 ## 7. International transfers
 
-Align operates from Singapore, and most of our service providers are based in the United States. Your account and rehearsal data are stored on servers in Ireland, in the European Union. However, our voice and AI providers process your rehearsals in the United States in real time, and our team in Singapore can access your data where needed to run the service. Analytics data from PostHog is stored in the European Union and Google Analytics is stored in the United States.
+Align operates from Singapore, and most of our service providers are based in the United States. Your account and rehearsal data are stored on servers in Ireland, in the European Union. However, our voice and AI providers process your rehearsals in the United States in real time, and our team in Singapore can access your data where needed to run the service. Analytics data from PostHog and Google Analytics is stored in the United States.
 
 Because we run Align from Singapore and use providers in other countries, your data may be transferred to, or accessed from, countries outside the one you live in. When your data is transferred across borders, we rely on appropriate safeguards. For transfers from the EU and UK, we use the European Commission’s Standard Contractual Clauses (with the UK Addendum for UK users), or the EU-US Data Privacy Framework where a provider is certified under it. For transfers from Singapore, we meet the transfer requirements of the PDPA through our data processing agreements with each provider, which require them to protect your data to a standard comparable to the PDPA. You can request a copy of these safeguards by emailing [privacy@livealign.co](mailto:privacy@livealign.co).
 
@@ -113,7 +113,7 @@ Because we run Align from Singapore and use providers in other countries, your d
 We keep your personal data only for as long as we need it for the purposes described in this policy, or for as long as the law requires.
 
 - **Account data:** kept while your account is active. Deleted within 30 days after you close your account, except where we are legally required to keep certain records for longer (for example, payment records, which we keep for 10 years from the end of the year of the transaction for tax purposes).
-- **Rehearsal data** (transcripts, situation descriptions, and your answers after each rehearsal): kept for as long as your account is open, so you can access them from your Account page. Deleted within 30 days after you close your account, or within 30 days of you deleting them from your Account page.
+- **Rehearsal data** (transcripts, situation descriptions, and your answers after each rehearsal): kept for as long as your account is open, so you can access them from Past rehearsals. Deleted within 30 days after you close your account, or within 30 days of you deleting them from Past rehearsals.
 
 - **Server logs:** kept for up to 90 days for security purposes.
 - **Analytics data:** Only for visitors who accepted analytics cookies.
@@ -129,7 +129,7 @@ The table below shows the legal basis we rely on for each purpose identified in 
 
 | What we use your data for | Legal basis |
 |---|---|
-| Provide the rehearsal service | Performance of our contract with you (contractual necessity). For sensitive information, you choose to include your explicit consent. |
+| Provide the rehearsal service | Performance of our contract with you (contractual necessity). For sensitive information you choose to include, your explicit consent. |
 | Authenticate your account and keep it secure | Performance of our contract with you, and our legitimate interest in keeping Align and its users safe from misuse. |
 | Save your rehearsal history so you can review past sessions | Performance of our contract with you. |
 | Understand product usage and improve the service | Your consent, given through the cookie banner. For feedback you give us after a rehearsal, our legitimate interest in improving Align. |
